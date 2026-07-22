@@ -1,5 +1,9 @@
 # @fhirstarter/ehr
 
+[![npm](https://img.shields.io/npm/v/@fhirstarter/ehr)](https://www.npmjs.com/package/@fhirstarter/ehr)
+[![CI](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml)
+[![Publish](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml)
+
 A thin, EHR-agnostic SMART on FHIR **EHR-launch** wrapper over
 [`fhirclient`](https://www.npmjs.com/package/fhirclient). It adds a hidden auth
 iframe, trickling progress, a SMART launch-JWT client-id fallback, a launch-phase
