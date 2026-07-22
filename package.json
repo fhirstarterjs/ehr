@@ -1,0 +1,83 @@
+{
+   "name": "@fhirstarter/ehr",
+   "version": "0.1.0",
+   "description": "Thin plug-and-play SMART on FHIR EHR-launch wrapper over fhirclient, with a hidden auth iframe, trickling progress, and turnkey Vue/React components.",
+   "license": "Kopimi",
+   "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
+   "keywords": [
+      "fhir",
+      "smart-on-fhir",
+      "smart-app-launch",
+      "ehr",
+      "fhirclient",
+      "oauth2",
+      "vue",
+      "react"
+   ],
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/fhirstarterjs/ehr.git"
+   },
+   "homepage": "https://github.com/fhirstarterjs/ehr#readme",
+   "bugs": "https://github.com/fhirstarterjs/ehr/issues",
+   "type": "module",
+   "publishConfig": {
+      "access": "public"
+   },
+   "sideEffects": [
+      "**/*.css"
+   ],
+   "engines": {
+      "node": ">=20.19"
+   },
+   "exports": {
+      ".": {
+         "types": "./dist/ts/index.d.ts",
+         "import": "./dist/index.js"
+      },
+      "./vue": {
+         "types": "./dist/ui/vue/index.d.ts",
+         "import": "./dist/vue.js"
+      },
+      "./react": {
+         "types": "./dist/ui/react/index.d.ts",
+         "import": "./dist/react.js"
+      },
+      "./style.css": "./dist/style.css"
+   },
+   "files": [
+      "dist",
+      "README.md",
+      "LICENSE.md"
+   ],
+   "scripts": {
+      "check": "tsc --noEmit",
+      "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && tsc",
+      "prepare": "npm run build",
+      "prepack": "npm run build"
+   },
+   "peerDependencies": {
+      "fhirclient": ">=2.6.3 <3",
+      "react": ">=19 <20",
+      "vue": ">=3.5 <4"
+   },
+   "peerDependenciesMeta": {
+      "react": {
+         "optional": true
+      },
+      "vue": {
+         "optional": true
+      }
+   },
+   "devDependencies": {
+      "@types/react": "^19.2.17",
+      "@vitejs/plugin-react": "^6.0.3",
+      "@vitejs/plugin-vue": "^6.0.8",
+      "fhirclient": "2.6.3",
+      "react": "^19.2.8",
+      "sass": "^1.101.3",
+      "typescript": "~7.0.2",
+      "vite": "^8.1.5",
+      "vue": "^3.5.40"
+   }
+}

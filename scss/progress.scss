@@ -1,0 +1,110 @@
+.fs-ehr-overlay {
+   position: fixed;
+   inset: 0;
+   z-index: 50;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: var(--fs-ehr-backdrop, rgb(0 0 0 / 30%));
+
+   .fs-ehr-panel {
+      width: 100%;
+      max-width: 24rem;
+      padding: 1rem;
+      border-radius: var(--fs-ehr-radius, 6px);
+      background: var(--fs-ehr-surface, #f3f4f6);
+      box-shadow: 0 10px 30px rgb(0 0 0 / 20%);
+   }
+
+   .fs-ehr-header {
+      margin-bottom: 0.75rem;
+   }
+
+   .fs-ehr-track {
+      height: 1rem;
+      overflow: hidden;
+      border-radius: 9999px;
+      background: var(--fs-ehr-track, #d1d5db);
+
+      .fs-ehr-fill {
+         height: 100%;
+         background: var(--fs-ehr-fill, #7f1d1d);
+         transition: width 400ms ease;
+
+         @media (prefers-reduced-motion: reduce) {
+            transition: none;
+         }
+      }
+   }
+
+   .fs-ehr-label {
+      margin-top: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--fs-ehr-text, #303030);
+   }
+
+   .fs-ehr-error {
+      margin-top: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--fs-ehr-fill, #7f1d1d);
+   }
+}
+
+// Debug-visible auth iframe (only when `showIframe`/`debug` is set). The hidden
+// frame is styled inline by the core, so this stylesheet is optional unless you
+// use the visible mode. Override freely via `.fs-ehr-frame.visible`.
+.fs-ehr-frame.visible {
+   position: fixed;
+   top: 50%;
+   left: 50%;
+   width: min(720px, calc(100vw - 32px));
+   height: min(640px, calc(100vh - 32px));
+   transform: translate(-50%, -50%);
+   z-index: 60;
+   border: 1px solid #64748b;
+   border-radius: var(--fs-ehr-radius, 6px);
+   background: #fff;
+   box-shadow: 0 20px 50px rgb(0 0 0 / 35%);
+}
+
+// Session-expired warning toast. Fixed to the bottom-right; persistent (not dismissible).
+.fs-ehr-expired {
+   position: fixed;
+   right: 0;
+   bottom: 0;
+   z-index: 1000;
+   pointer-events: none;
+
+   .fs-ehr-expired__pill {
+      pointer-events: auto;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #c9bd19;
+      border-radius: var(--fs-ehr-radius, 6px);
+      background: #faeebf;
+      color: #292929;
+      box-shadow: 0 10px 30px rgb(0 0 0 / 20%);
+      font-size: 0.85rem;
+      cursor: help;
+      user-select: none;
+      animation: fs-ehr-fade-in 300ms ease-out both;
+
+      @media (prefers-reduced-motion: reduce) {
+         animation: none;
+      }
+   }
+}
+
+@keyframes fs-ehr-fade-in {
+   from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+   }
+
+   to {
+      opacity: 0.85;
+      transform: translateY(0);
+   }
+}
