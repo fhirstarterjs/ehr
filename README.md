@@ -13,6 +13,10 @@ status machine, and turnkey Vue/React components — while forwarding every
 Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 `fhirclient` handles version negotiation.
 
+> Need server-to-server auth instead? See the sister project
+> **[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** — the SMART
+> **Backend Services** (client credentials) auth lifecycle for any FHIR client.
+
 
 ## Contents
 
