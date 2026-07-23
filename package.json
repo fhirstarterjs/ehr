@@ -53,6 +53,7 @@
    "scripts": {
       "check": "tsc --noEmit",
       "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && tsc",
+      "test": "npm run build && tsc -p tsconfig.test.json && node --test \"test/**/*.test.ts\"",
       "prepare": "npm run build",
       "prepack": "npm run build"
    },
