@@ -17,6 +17,10 @@ Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 > **[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** — the SMART
 > **Backend Services** (client credentials) auth lifecycle for any FHIR client.
 
+> **Migrating from 0.1.x?** The `launch` export was renamed to `fhirStarter`
+> (default and named). Replace `import { launch }` with `import { fhirStarter }`
+> — the signature and behavior are identical.
+
 
 ## Contents
 
@@ -25,6 +29,7 @@ Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 - [Modes](#modes)
 - [Options](#options)
 - [Session expiry](#session-expiry)
+- [Other FHIR clients](#other-fhir-clients)
 - [Components](#components)
   - [Vue](#vue)
   - [React](#react)
@@ -43,10 +48,10 @@ whichever wrapper you use.
 ## Quick start
 
 ```ts
-import { launch } from "@fhirstarter/ehr"
+import { fhirStarter } from "@fhirstarter/ehr"
 
 // Zero-config: the client id is derived from the SMART launch token by default.
-const client = await launch({
+const client = await fhirStarter({
    onProgress: (percent) => updateBar(percent),
    onStatus: (status) => console.log(status),
 })
@@ -56,10 +61,10 @@ if (client) {
 ```
 
 By default no options are required — the client id is decoded from the `launch`
-token passed by the EHR. `launch()` returns the real `fhirclient` `Client` (or
-`null` when there is no launch context), so `request()`, `patient`, `user`, and
-`state` all work as usual. (`onProgress`/`onStatus` are also exported as
-standalone subscribe functions if you prefer.)
+token passed by the EHR. `fhirStarter()` returns the real `fhirclient` `Client`
+(or `null` when there is no launch context), so `request()`, `patient`, `user`,
+and `state` all work as usual. It is also the default export. (`onProgress`/
+`onStatus` are also exported as standalone subscribe functions if you prefer.)
 
 ## Modes
 
@@ -87,23 +92,57 @@ launch-JWT decode (the default, no config needed).
 
 ## Session expiry
 
-Browser (public) clients cannot safely refresh SMART tokens, so `launch()`
+Browser (public) clients cannot safely refresh SMART tokens, so `fhirStarter()`
 schedules a timer for the token's fixed expiry and emits the `"expired"` status
 when it fires — regardless of whether you use the components:
 
 ```ts
-import { launch, onStatus } from "@fhirstarter/ehr"
+import { fhirStarter, onStatus } from "@fhirstarter/ehr"
 
 onStatus((status) => {
    if (status === "expired") disableSaveButtons() // your call
 })
 
-await launch()
+await fhirStarter()
 ```
 
 The `EhrLaunch` components react by showing a persistent, click-through toast
 prompting the user to close and relaunch from the EHR. Override its text via the
 `expired` slot/prop, or restyle `.fs-ehr-expired` / `.fs-ehr-expired__pill`.
+
+## Other FHIR clients
+
+`fhirStarter` uses `fhirclient` to run the SMART EHR-launch flow — that dependency
+is required and cannot be swapped. But once authorized, you can hand the result
+off to any FHIR client or plain `fetch` by reading a few fields from the returned
+`client.state`.
+
+Pass only the fields you need. **Never** spread the whole `client.state` — it can
+contain PKCE material and other sensitive values:
+
+```ts
+import { fhirStarter } from "@fhirstarter/ehr"
+
+const client = await fhirStarter()
+if (client) {
+   const
+      serverUrl = client.state.serverUrl,
+      token = client.state.tokenResponse?.access_token
+
+   // Raw fetch:
+   const res = await fetch(`${serverUrl}/Patient/${client.patient.id}`, {
+      headers: token ? { authorization: `Bearer ${token}` } : {},
+   })
+
+   // Or fhir-kit-client:
+   // const kit = new Client({ baseUrl: serverUrl })
+   // kit.bearerToken = token
+}
+```
+
+`state.expiresAt` (epoch seconds) is also available if you want to track expiry
+yourself. This mirrors the handoff story in the sister
+**[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** package.
 
 ## Components
 
