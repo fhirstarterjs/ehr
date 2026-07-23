@@ -1,7 +1,7 @@
 /** React entry: the `useEhrLaunch` hook plus component re-exports. */
 
 import { useState, useEffect, useRef } from "react"
-import { launch, onStatus, onProgress } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
 
 export { ProgressBar } from "./ProgressBar.js"
 export { EhrLaunch } from "./EhrLaunch.js"
@@ -25,7 +25,7 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => 
       const
          offStatus = onStatus((s) => alive && setState(s)),
          offProgress = onProgress((p) => alive && setPercent(p))
-      launch(opts.current)
+      fhirStarter(opts.current)
          .then((c) => alive && (setClient(c), setLoading(false)))
          .catch((e) => alive && (setError(e as EhrAuthError), setLoading(false)))
       return () => void (alive = false, offStatus(), offProgress())

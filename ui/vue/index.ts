@@ -2,7 +2,7 @@
 
 import { ref, shallowRef, onMounted, onUnmounted } from "vue"
 import type { ShallowRef } from "vue"
-import { launch, onStatus, onProgress } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
 
 export { default as ProgressBar } from "./ProgressBar.vue"
 export { default as EhrLaunch } from "./EhrLaunch.vue"
@@ -27,7 +27,7 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
          offStatus = onStatus((s) => alive && (state.value = s)),
          offProgress = onProgress((p) => alive && (percent.value = p))
       onUnmounted(() => (alive = false, offStatus(), offProgress()))
-      launch(options)
+      fhirStarter(options)
          .then((c) => alive && ((client.value = c), (loading.value = false)))
          .catch((e) => alive && ((error.value = e as EhrAuthError), (loading.value = false)))
    })

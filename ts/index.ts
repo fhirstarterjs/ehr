@@ -5,12 +5,17 @@ import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./stat
 
 export { onProgress, getProgress, onStatus, getStatus }
 
-/** Begin (or reuse) the one-shot launch for this page load. Idempotent. */
-export const launch = (opts: EhrLaunchOptions = {}): Promise<SmartClient | null> => {
+/** Begin (or reuse) the one-shot SMART EHR launch for this page load. Idempotent. */
+export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<SmartClient | null> => {
    if (started) return started
    options = opts, opts.onProgress && onProgress(opts.onProgress), opts.onStatus && onStatus(opts.onStatus)
    return (started = run().then((client) => (client && watchExpiry(client), client)).catch(fail))
 }
+
+/** Backward-compatible alias of {@link fhirStarter}. Prefer `fhirStarter` in new code. */
+export const launch = fhirStarter
+
+export default fhirStarter
 
 /** Reset all module state (progress, status, listeners, iframe, expiry timer). */
 export const destroy = (): void => {
