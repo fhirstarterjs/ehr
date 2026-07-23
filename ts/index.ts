@@ -1,8 +1,9 @@
 import { onProgress, getProgress, trickle, stopProgress, resetProgress } from "./progress.js"
 import { resolveClientId, mountIframe, forwardCallback } from "./iframe.js"
 import { classify, authError, completeSession, restoreSession } from "./callback.js"
+import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./status.js"
 
-export { onProgress, getProgress }
+export { onProgress, getProgress, onStatus, getStatus }
 
 /** Begin (or reuse) the one-shot launch for this page load. Idempotent. */
 export const launch = (opts: EhrLaunchOptions = {}): Promise<SmartClient | null> => {
@@ -11,52 +12,24 @@ export const launch = (opts: EhrLaunchOptions = {}): Promise<SmartClient | null>
    return (started = run().then((client) => (client && watchExpiry(client), client)).catch(fail))
 }
 
-/** Subscribe to lifecycle status; immediately emits current status. Returns unsubscribe. */
-export const onStatus = (listener: StatusListener): Unsubscribe => {
-   statusListeners.add(listener)
-   listener(status)
-   return () => void statusListeners.delete(listener)
-}
-
-/** Current lifecycle status. */
-export const getStatus = (): EhrStatus => status
-
 /** Reset all module state (progress, status, listeners, iframe, expiry timer). */
 export const destroy = (): void => {
    stopProgress()
    removeFrame?.(), (removeFrame = null)
-   expiryTimer && (clearTimeout(expiryTimer), (expiryTimer = null))
+   resetStatus()
    resetProgress()
-   statusListeners.clear()
    options = {}
-   status = "initializing"
    started = null
 }
 
 let
    options: EhrLaunchOptions = {},
-   status: EhrStatus = "initializing",
    started: Promise<SmartClient | null> | null = null,
-   removeFrame: (() => void) | null = null,
-   expiryTimer: ReturnType<typeof setTimeout> | null = null
+   removeFrame: (() => void) | null = null
 
 const
-   statusListeners = new Set<StatusListener>(),
    log = (message: string, detail?: unknown): void =>
       void (options.debug && console.info(`[fhirstarter:ehr] ${message}`, detail ?? "")),
-
-   setStatus = (next: EhrStatus): void => {
-      status = next
-      statusListeners.forEach((fn) => fn(next))
-   },
-
-   // Token expiry is fixed at issuance (no refresh): one timer at `state.expiresAt` (epoch s) → `expired`.
-   watchExpiry = (client: SmartClient): void => {
-      expiryTimer && (clearTimeout(expiryTimer), (expiryTimer = null))
-      const expiresAt = client.state.expiresAt
-      if (!expiresAt) return
-      expiryTimer = setTimeout(() => setStatus("expired"), Math.max(0, expiresAt * 1_000 - Date.now()))
-   },
 
    scopeString = (): string | undefined => {
       const raw = options.scopes
