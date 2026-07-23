@@ -4,17 +4,17 @@
 [![CI](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml)
 [![Publish](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml)
 
-A thin, EHR-agnostic SMART on FHIR **EHR-launch** wrapper over
-[`fhirclient`](https://www.npmjs.com/package/fhirclient). It adds a hidden auth
-iframe, trickling progress, a SMART launch-JWT client-id fallback, a launch-phase
-status machine, and turnkey Vue/React components — while forwarding every
-`fhirclient` option through unchanged.
+A thin, plug-and-play SMART on FHIR **EHR-launch** library. It runs the launch
+flow end to end. Authorization happens in the background without ever navigating
+away from your app, your client ID is auto-detected from the launch (so there's
+nothing to configure), progress and status are reported live, and turnkey
+Vue/React components are included. When it's done, you get an authorized client
+for **any** FHIR library or plain `fetch`.
 
-Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
-`fhirclient` handles version negotiation.
+Targets SMART App Launch 2.2.0 (STU 2.2) with SMART v1 backwards compatability
 
 > Need server-to-server auth instead? See the sister project
-> **[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** — the SMART
+> **[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)**, the SMART
 > **Backend Services** (client credentials) auth lifecycle for any FHIR client.
 
 
@@ -25,7 +25,7 @@ Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 - [Modes](#modes)
 - [Options](#options)
 - [Session expiry](#session-expiry)
-- [Other FHIR clients](#other-fhir-clients)
+- [Bring your own client](#bring-your-own-client)
 - [Components](#components)
   - [Vue](#vue)
   - [React](#react)
@@ -38,8 +38,9 @@ Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 npm install @fhirstarter/ehr fhirclient
 ```
 
-`fhirclient` is a required peer. `vue` and `react` are optional peers — install
-whichever wrapper you use.
+The launch flow runs on [`fhirclient`](https://www.npmjs.com/package/fhirclient),
+so it is a required peer (npm 7+ installs it automatically). `vue` and `react`
+are optional peers; install whichever wrapper you use, if any.
 
 ## Quick start
 
@@ -56,24 +57,27 @@ if (client) {
 }
 ```
 
-By default no options are required — the client id is decoded from the `launch`
-token passed by the EHR. `fhirStarter()` returns the real `fhirclient` `Client`
-(or `null` when there is no launch context), so `request()`, `patient`, `user`,
-and `state` all work as usual. It is also the default export. (`onProgress`/
-`onStatus` are also exported as standalone subscribe functions if you prefer.)
+By default no options are required. The client id is decoded from the `launch`
+token passed by the EHR. `fhirStarter()` returns a ready-to-use `fhirclient`
+client (or `null` when there is no launch context), so `request()`, `patient`,
+`user`, and `state` all work out of the box. Prefer a different FHIR client? Hand
+the completed auth off to any library or plain `fetch` instead (see
+[Bring your own client](#bring-your-own-client)). `fhirStarter` is also the
+default export, and `onProgress`/`onStatus` are exported as standalone subscribe
+functions if you prefer.
 
 ## Modes
 
-- `iframe: true` (default) — a hidden iframe authorizes and hands its callback
+- `iframe: true` (default): a hidden iframe authorizes and hands its callback
   URL to the parent, which exchanges the code without navigating.
-- `iframe: false` — a full top-level redirect to the auth server and back, for
+- `iframe: false`: a full top-level redirect to the auth server and back, for
   hosts or EHRs that forbid framing.
 
 ## Options
 
 | Option | Description |
 | --- | --- |
-| `clientId` | Static client id. Optional — derived from the launch token by default. |
+| `clientId` | Static client id. Optional; derived from the launch token by default. |
 | `resolveClientId` | Async `(ctx) => id` resolver, given `{ iss, launch }`, for per-launch schemes. |
 | `scopes` | Scope string or array, forwarded verbatim (SMART v1 or v2). |
 | `redirectUri` | Defaults to the current window origin. |
@@ -90,7 +94,7 @@ launch-JWT decode (the default, no config needed).
 
 Browser (public) clients cannot safely refresh SMART tokens, so `fhirStarter()`
 schedules a timer for the token's fixed expiry and emits the `"expired"` status
-when it fires — regardless of whether you use the components:
+when it fires, regardless of whether you use the components:
 
 ```ts
 import { fhirStarter, onStatus } from "@fhirstarter/ehr"
@@ -106,14 +110,13 @@ The `EhrLaunch` components react by showing a persistent, click-through toast
 prompting the user to close and relaunch from the EHR. Override its text via the
 `expired` slot/prop, or restyle `.fs-ehr-expired` / `.fs-ehr-expired__pill`.
 
-## Other FHIR clients
+## Bring your own client
 
-`fhirStarter` uses `fhirclient` to run the SMART EHR-launch flow — that dependency
-is required and cannot be swapped. But once authorized, you can hand the result
-off to any FHIR client or plain `fetch` by reading a few fields from the returned
-`client.state`.
+Once authorized, you are not tied to any particular FHIR client. Hand the result
+off to any FHIR library or plain `fetch` by reading a few fields from the
+returned `client.state`.
 
-Pass only the fields you need. **Never** spread the whole `client.state` — it can
+Pass only the fields you need. **Never** spread the whole `client.state`; it can
 contain PKCE material and other sensitive values:
 
 ```ts
@@ -137,13 +140,17 @@ if (client) {
 ```
 
 `state.expiresAt` (epoch seconds) is also available if you want to track expiry
-yourself. This mirrors the handoff story in the sister
-**[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** package.
+yourself.
+
+> Under the hood the launch flow is powered by
+> [`fhirclient`](https://www.npmjs.com/package/fhirclient) (a required peer). You
+> rarely touch it directly, but that is why `client` and `client.state` follow
+> its shape.
 
 ## Components
 
 Turnkey `EhrLaunch` components run the launch, show the progress bar, then
-render your app. Each imports its own default theme — no separate style import.
+render your app. Each imports its own default theme, so no separate style import.
 
 ### Vue
 
@@ -253,5 +260,5 @@ yourself.
 Restyle via the stable `fs-ehr-*` classes and CSS variables
 (`--fs-ehr-fill`, `--fs-ehr-surface`, `--fs-ehr-track`, `--fs-ehr-text`,
 `--fs-ehr-radius`, `--fs-ehr-backdrop`). Because the theme is loaded as normal
-CSS, your own later/higher-specificity rules override it — and the components
+CSS, your own later/higher-specificity rules override it, and the components
 accept class overrides directly.
