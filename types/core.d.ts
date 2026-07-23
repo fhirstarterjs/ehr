@@ -31,8 +31,10 @@ interface EhrLaunchOptions {
    clientId?: string
    /** Async resolver for the client_id, given the launch context. */
    resolveClientId?: (context: EhrLaunchContext) => string | Promise<string>
-   /** Scopes to request; passed through to fhirclient verbatim (v1 or v2). */
+   /** Scopes to request; space-delimited string or array. */
    scopes?: string | string[]
+   /** PKCE policy. `required` (default) fails without S256; `ifSupported`/`disabled` relax it. */
+   pkce?: PkceMode
    /** Redirect URI; defaults to the current window origin. */
    redirectUri?: string
    /** `false` uses a full top-level redirect instead of the hidden iframe. */
