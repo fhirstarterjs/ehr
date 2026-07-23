@@ -1,6 +1,6 @@
 {
    "name": "@fhirstarter/ehr",
-   "version": "0.1.0",
+   "version": "0.2.0",
    "description": "Thin plug-and-play SMART on FHIR EHR-launch wrapper over fhirclient, with a hidden auth iframe, trickling progress, and turnkey Vue/React components.",
    "license": "Kopimi",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",

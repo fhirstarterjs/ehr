@@ -17,10 +17,6 @@ Targets SMART App Launch 2.2.0 (STU 2.2); SMART v1 keeps working because
 > **[@fhirstarter/backend](https://github.com/fhirstarterjs/backend)** — the SMART
 > **Backend Services** (client credentials) auth lifecycle for any FHIR client.
 
-> **Migrating from 0.1.x?** The `launch` export was renamed to `fhirStarter`
-> (default and named). Replace `import { launch }` with `import { fhirStarter }`
-> — the signature and behavior are identical.
-
 
 ## Contents
 
