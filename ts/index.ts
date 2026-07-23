@@ -12,9 +12,6 @@ export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<SmartClient | 
    return (started = run().then((client) => (client && watchExpiry(client), client)).catch(fail))
 }
 
-/** Backward-compatible alias of {@link fhirStarter}. Prefer `fhirStarter` in new code. */
-export const launch = fhirStarter
-
 export default fhirStarter
 
 /** Reset all module state (progress, status, listeners, iframe, expiry timer). */
