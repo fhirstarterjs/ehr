@@ -111,6 +111,9 @@ case refresh fails and the session simply expires at the token's lifetime. When
 no refresh token is issued, the token is one-shot and `fhirStarter()` emits the
 `"expired"` status at expiry:
 
+Reloading restores an unexpired access-token snapshot, but not the memory-only
+refresh token. Proactive refresh resumes only after a new launch.
+
 ```ts
 import { fhirStarter, onStatus } from "@fhirstarter/ehr"
 
@@ -263,14 +266,14 @@ const { state, handoff, percent, error, loading } = useEhrLaunch()
 
 | Prop | Vue | React | Description |
 | --- | --- | --- | --- |
-| `options` | prop | prop | Any `EhrLaunchOptions` (`clientId`, `scopes`, `iframe`, `redirectUri`, `fhir`, …), forwarded to the launch. |
+| `options` | prop | prop | Any `EhrLaunchOptions` (`clientId`, `scopes`, `iframe`, `redirectUri`, `params`, etc.), forwarded to the launch. |
 | `completionDelayMs` | prop | prop | How long 100% stays visible before revealing content. Default `500`. |
 | `showStatus` | prop | prop | Show the status text under the bar. Default `true`; set `false` to hide it. |
 | header | `#header` slot | `header` node | Rendered above the progress bar (logo, title). |
 | label | `#label` slot | `label` node | Overrides the bar's status text. |
 | error | `#error` slot | `error(err)` render prop | Custom error display; defaults to the message. |
 | expired | `#expired` slot | `expired` node | Overrides the session-expired toast content. |
-| authenticated content | default `v-slot="{ client, state, error }"` | `children({ client, state, error })` | Rendered after auth completes. |
+| authenticated content | default `v-slot="{ handoff, state, error }"` | `children({ handoff, state, error })` | Rendered after auth completes. |
 
 ### Styling
 

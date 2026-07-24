@@ -6,7 +6,7 @@ import { startRefresh } from "./refresh.js"
 /** Launch-flow phase inferred purely from the current URL's query params. */
 export const classify = (search: URLSearchParams): "launch" | "callback" | "error" | "none" => {
    if (search.get("error") || search.get("error_description")) return "error"
-   if (search.get("code") && search.get("state")) return "callback"
+   if (search.get("code")) return "callback"
    if (search.get("iss") && search.get("launch")) return "launch"
    return "none"
 }
@@ -27,6 +27,12 @@ export const authError = (search: URLSearchParams, cause?: unknown): EhrAuthErro
    if (cause !== undefined) err.cause = cause
    return err
 }
+
+/** Validate and consume state before surfacing an OAuth denial callback. */
+export const rejectSession = (search: URLSearchParams): EhrAuthError =>
+   takePreAuth(search.get("state") ?? "")
+      ? authError(search)
+      : authError(search, "unknown or missing state (possible CSRF)")
 
 /** Complete a native callback: validate `state`, exchange the code, build the handoff. */
 export const completeSession = async (

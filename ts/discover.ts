@@ -1,3 +1,5 @@
+import { hydrateHandoff } from "./token.js"
+
 const
    KEY_PREFIX = "fhirstarter:ehr:",
    SESSION_KEY = `${KEY_PREFIX}session`,
@@ -8,6 +10,19 @@ const
 
    preAuthKey = (state: string): string => `${KEY_PREFIX}pre:${state}`,
 
+   secureUrl = (value: string, label: string): string => {
+      let url: URL
+      try {
+         url = new URL(value)
+      } catch {
+         throw new Error(`EhrLaunch: invalid ${label} URL`)
+      }
+      const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+      if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback))
+         throw new Error(`EhrLaunch: ${label} must use HTTPS`)
+      return url.href
+   },
+
    parseMetadata = (cap: FhirCapabilityStatement): SmartConfig => {
       const ext = cap.rest?.[0]?.security?.extension?.find(
          (e) => e.url === "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
@@ -17,12 +32,15 @@ const
       const authorizeUrl = pick("authorize"), tokenUrl = pick("token")
       if (!authorizeUrl || !tokenUrl)
          throw new Error("EhrLaunch: CapabilityStatement is missing SMART oauth-uris")
-      return { authorizeUrl, tokenUrl }
+      return {
+         authorizeUrl: secureUrl(authorizeUrl, "authorization endpoint"),
+         tokenUrl: secureUrl(tokenUrl, "token endpoint"),
+      }
    }
 
 /** Build the SMART authorize URL, protecting reserved OAuth/SMART keys from `params`. */
 export const buildAuthorizeUrl = (authorizeUrl: string, req: AuthorizeParams): string => {
-   const url = new URL(authorizeUrl)
+   const url = new URL(secureUrl(authorizeUrl, "authorization endpoint"))
    const set = (k: string, v: string | undefined): void => void (v && url.searchParams.set(k, v))
    set("response_type", "code")
    set("client_id", req.clientId)
@@ -44,11 +62,13 @@ export const savePreAuth = (blob: PreAuthState): void =>
 
 /** Read and remove the pre-auth blob for a returned `state`, or null if absent. */
 export const takePreAuth = (state: string): PreAuthState | null => {
+   if (!state) return null
    const key = preAuthKey(state), raw = sessionStorage.getItem(key)
    if (!raw) return null
    sessionStorage.removeItem(key)
    try {
-      return JSON.parse(raw) as PreAuthState
+      const pre = JSON.parse(raw) as PreAuthState
+      return pre.state === state ? pre : null
    } catch {
       return null
    }
@@ -58,13 +78,18 @@ export const takePreAuth = (state: string): PreAuthState | null => {
 export const saveSession = (handoff: EhrHandoff): void =>
    sessionStorage.setItem(SESSION_KEY, JSON.stringify(handoff))
 
+/** Remove the persisted authenticated session snapshot. */
+export const clearSession = (): void => sessionStorage.removeItem(SESSION_KEY)
+
 /** Read the persisted handoff snapshot, or null when none exists or it is expired. */
 export const loadSession = (): EhrHandoff | null => {
    const raw = sessionStorage.getItem(SESSION_KEY)
    if (!raw) return null
    try {
       const h = JSON.parse(raw) as EhrHandoff
-      return h.expiresAt && Date.now() < h.expiresAt ? h : (sessionStorage.removeItem(SESSION_KEY), null)
+      return h.expiresAt && Date.now() < h.expiresAt
+         ? hydrateHandoff(h)
+         : (sessionStorage.removeItem(SESSION_KEY), null)
    } catch {
       return null
    }
@@ -75,7 +100,7 @@ export const loadSession = (): EhrHandoff | null => {
  * `.well-known/smart-configuration` first, then the CapabilityStatement fallback.
  */
 export const discover = async (iss: string): Promise<SmartConfig> => {
-   const base = iss.replace(/\/+$/, "")
+   const base = secureUrl(iss, "FHIR issuer").replace(/\/+$/, "")
    const wk = await fetch(`${base}/.well-known/smart-configuration`, {
       headers: { accept: "application/json" },
    }).catch(() => null)
@@ -83,8 +108,8 @@ export const discover = async (iss: string): Promise<SmartConfig> => {
       const c = (await wk.json()) as SmartWellKnown
       if (c.authorization_endpoint && c.token_endpoint)
          return {
-            authorizeUrl: c.authorization_endpoint,
-            tokenUrl: c.token_endpoint,
+            authorizeUrl: secureUrl(c.authorization_endpoint, "authorization endpoint"),
+            tokenUrl: secureUrl(c.token_endpoint, "token endpoint"),
             pkceMethods: c.code_challenge_methods_supported,
          }
    }

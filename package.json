@@ -47,12 +47,13 @@
    },
    "files": [
       "dist",
+      "types",
       "README.md",
       "LICENSE.md"
    ],
    "scripts": {
       "check": "tsc --noEmit",
-      "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && tsc",
+      "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && tsc && node scripts/link-types.mjs",
       "prepare": "npm run build",
       "prepack": "npm run build"
    },
@@ -73,7 +74,7 @@
       "@vitejs/plugin-react": "^6.0.4",
       "@vitejs/plugin-vue": "^6.0.8",
       "react": "^19.2.8",
-      "sass": "^1.101.6",
+      "sass": "^1.101.7",
       "typescript": "~7.0.2",
       "vite": "^8.1.5",
       "vue": "^3.5.40"

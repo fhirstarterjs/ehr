@@ -1,21 +1,32 @@
 import { applyToken } from "./token.js"
-import { saveSession } from "./discover.js"
+import { clearSession, saveSession } from "./discover.js"
 import { setStatus } from "./status.js"
 
 let
    timer: ReturnType<typeof setTimeout> | null = null,
    inFlight: Promise<void> | null = null,
-   token: string | null = null
+   token: string | null = null,
+   generation = 0,
+   retryMs = 5_000
 
 const
    BUFFER_MS = 60_000,
-   RETRY_MS = 5_000,
+   MAX_RETRY_MS = 60_000,
 
    clear = (): void => void (timer && (clearTimeout(timer), (timer = null))),
 
-   schedule = (ctx: RefreshContext, at: number): void => {
+   schedule = (ctx: RefreshContext, at: number, current: number): void => {
       clear()
-      timer = setTimeout(() => void run(ctx), Math.max(0, at - BUFFER_MS - Date.now()))
+      const ttl = Math.max(0, at - Date.now()), lead = Math.min(BUFFER_MS, ttl / 2)
+      timer = setTimeout(() => void run(ctx, current), Math.max(0, ttl - lead))
+   },
+
+   retry = (ctx: RefreshContext, current: number): void => {
+      clear()
+      const remaining = ctx.handoff.expiresAt - Date.now()
+      if (remaining <= 0) return void setStatus("expired")
+      timer = setTimeout(() => void run(ctx, current), Math.min(retryMs, remaining))
+      retryMs = Math.min(MAX_RETRY_MS, retryMs * 2)
    },
 
    post = async (ctx: RefreshContext): Promise<SmartTokenResponse> => {
@@ -30,26 +41,27 @@ const
          body,
       })
       const data = (await res.json().catch(() => ({}))) as SmartTokenResponse
-      if (res.status === 400 || res.status === 401) throw new Error("invalid_grant")
+      if (data.error === "invalid_grant") throw new Error("invalid_grant")
       if (!res.ok || !data.access_token) throw new Error(`refresh failed (${res.status})`)
       return data
    },
 
-   run = (ctx: RefreshContext): Promise<void> =>
+   run = (ctx: RefreshContext, current: number): Promise<void> =>
       (inFlight ??= (async () => {
          try {
             const data = await post(ctx)
+            if (current !== generation) return
             applyToken(ctx.handoff, data)
             data.refresh_token && (token = data.refresh_token)
+            retryMs = 5_000
             saveSession(ctx.handoff)
-            schedule(ctx, ctx.handoff.expiresAt)
+            schedule(ctx, ctx.handoff.expiresAt, current)
          } catch (err) {
+            if (current !== generation) return
             const terminal = (err as Error).message === "invalid_grant"
             terminal
-               ? (clear(), setStatus("invalid"))
-               : Date.now() < ctx.handoff.expiresAt
-                  ? schedule(ctx, Date.now() + RETRY_MS + BUFFER_MS)
-                  : (clear(), setStatus("expired"))
+               ? (clear(), (token = null), clearSession(), setStatus("invalid"))
+               : retry(ctx, current)
          } finally {
             inFlight = null
          }
@@ -65,12 +77,13 @@ const
 export const startRefresh = (ctx: RefreshContext, refreshToken: string | undefined): void => {
    if (!refreshToken) return
    token = refreshToken
-   schedule(ctx, ctx.handoff.expiresAt)
+   retryMs = 5_000
+   schedule(ctx, ctx.handoff.expiresAt, generation)
 }
 
 /** Cancel refresh work and forget the private refresh token. */
 export const stopRefresh = (): void => {
+   generation++
    clear()
-   inFlight = null
    token = null
 }

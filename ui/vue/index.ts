@@ -5,12 +5,15 @@ import type { ShallowRef } from "vue"
 import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
 // EhrHandoff is an ambient global type from ../../types
 
+/** Vue progress component. */
 export { default as ProgressBar } from "./ProgressBar.vue"
+
+/** Turnkey Vue EHR-launch component. */
 export { default as EhrLaunch } from "./EhrLaunch.vue"
 
 /**
  * Reactive SMART EHR-launch composable. Runs the core on mount and exposes
- * `{ state, client, percent, error, loading }` refs. Unsubscribes on unmount
+ * `{ state, handoff, percent, error, loading }` refs. Unsubscribes on unmount
  * without destroying the shared one-shot launch.
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {

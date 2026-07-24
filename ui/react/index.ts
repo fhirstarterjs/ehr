@@ -3,12 +3,15 @@
 import { useState, useEffect, useRef } from "react"
 import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
 
+/** React progress component. */
 export { ProgressBar } from "./ProgressBar.js"
+
+/** Turnkey React EHR-launch component. */
 export { EhrLaunch } from "./EhrLaunch.js"
 
 /**
  * React SMART EHR-launch hook. Subscribes to core status/progress and returns
- * `{ state, client, percent, error, loading }`. Guards post-unmount updates and
+ * `{ state, handoff, percent, error, loading }`. Guards post-unmount updates and
  * reuses the same core promise across Strict Mode's setup-cleanup-setup cycle.
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => {

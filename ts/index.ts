@@ -1,11 +1,12 @@
 import { onProgress, getProgress, trickle, stopProgress, resetProgress } from "./progress.js"
 import { resolveClientId, mountIframe, forwardCallback } from "./iframe.js"
-import { classify, authError, completeSession, restoreSession } from "./callback.js"
+import { classify, completeSession, rejectSession, restoreSession } from "./callback.js"
 import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./status.js"
 import { discover, buildAuthorizeUrl, savePreAuth } from "./discover.js"
 import { verifier, challenge, usePkce } from "./pkce.js"
 import { stopRefresh } from "./refresh.js"
 
+/** Progress and status subscriptions plus their current snapshots. */
 export { onProgress, getProgress, onStatus, getStatus }
 
 /** Begin (or reuse) the one-shot SMART EHR launch for this page load. Idempotent. */
@@ -15,6 +16,7 @@ export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | n
    return (started = run().then((h) => (h && watchExpiry(h), h)).catch(fail))
 }
 
+/** Default SMART EHR-launch entrypoint. */
 export default fhirStarter
 
 /** Reset all module state (progress, status, listeners, iframe, expiry + refresh timers). */
@@ -85,7 +87,7 @@ const
          frame.navigate(url)
          const callbackUrl = await frame.callback
          if (classify(callbackUrl.searchParams) === "error")
-            return fail(authError(callbackUrl.searchParams))
+            return fail(rejectSession(callbackUrl.searchParams))
          return completeSession(callbackUrl.searchParams, options, setStatus)
       }
       window.location.assign(url)
@@ -98,7 +100,7 @@ const
          case "error":
             return window.parent !== window && options.iframe !== false
                ? forwardCallback()
-               : fail(authError(search))
+               : fail(rejectSession(search))
          case "callback":
             return window.parent !== window && options.iframe !== false
                ? forwardCallback()

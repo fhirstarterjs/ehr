@@ -11,13 +11,39 @@ const
    define = (target: object, key: string, value: unknown): void =>
       void Object.defineProperty(target, key, { value, enumerable: true, configurable: true }),
 
-   /** Flatten known + own vendor token fields onto the handoff, never clobbering reserved keys. */
+   liveToken = (handoff: EhrHandoff): EhrFhirTokenResponse => ({
+      get access_token() { return handoff.accessToken },
+      get expires_in() { return Math.max(0, Math.ceil((handoff.expiresAt - Date.now()) / 1_000)) },
+      get token_type(): "Bearer" | "bearer" | undefined {
+         return handoff.tokenType === "Bearer" ? "Bearer" : handoff.tokenType?.toLowerCase() === "bearer" ? "bearer" : undefined
+      },
+      get scope() { return handoff.scope },
+      get patient() { return handoff.patient },
+      get encounter() { return handoff.encounter },
+      get id_token() { return handoff.idToken },
+   }),
+
    flatten = (handoff: object, res: SmartTokenResponse): void => {
       for (const key of Object.keys(res)) {
          if (UNSAFE.has(key) || PRIVATE.has(key) || RESERVED.has(key)) continue
          define(handoff, key, res[key])
       }
    }
+
+/** Restore the non-persisted live adapters on a handoff object. */
+export const hydrateHandoff = (handoff: EhrHandoff): EhrHandoff => {
+   Object.defineProperties(handoff, {
+      fhirClient: {
+         configurable: true,
+         get: () => ({ serverUrl: handoff.serverUrl, tokenResponse: liveToken(handoff) }),
+      },
+      authHeaders: {
+         configurable: true,
+         get: () => handoff.accessToken ? { Authorization: `Bearer ${handoff.accessToken}` } : {},
+      },
+   })
+   return handoff
+}
 
 /** Merge a token response into a handoff in place: present fields replace, omitted survive. */
 export const applyToken = (handoff: EhrHandoff, res: SmartTokenResponse): EhrHandoff => {
@@ -41,10 +67,10 @@ export const toHandoff = (
    serverUrl: string,
    params: Record<string, unknown> | undefined,
 ): EhrHandoff =>
-   applyToken(
+   hydrateHandoff(applyToken(
       { serverUrl, params: params ? { ...params } : undefined } as EhrHandoff,
       res,
-   )
+   ))
 
 /** Exchange an authorization code for a token, validating `state` and OAuth errors first. */
 export const exchange = async (
