@@ -11,5 +11,5 @@ const
    }
 
 link("dist/ts/index.d.ts", ["types/core.d.ts", "types/native.d.ts"])
-link("dist/ui/react/index.d.ts", ["types/core.d.ts", "types/native.d.ts", "types/react.d.ts"])
-link("dist/ui/vue/index.d.ts", ["types/core.d.ts", "types/native.d.ts"])
+link("dist/ui/react/index.d.ts", ["types/core.d.ts", "types/native.d.ts", "types/react.d.ts", "types/assets.d.ts"])
+link("dist/ui/vue/index.d.ts", ["types/core.d.ts", "types/native.d.ts", "types/vue-shim.d.ts"])

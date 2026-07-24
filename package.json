@@ -46,8 +46,21 @@
       "./style.css": "./dist/style.css"
    },
    "files": [
-      "dist",
-      "types",
+      "dist/*.js",
+      "dist/*.js.map",
+      "dist/*.css",
+      "dist/ts/index.d.ts",
+      "dist/ts/progress.d.ts",
+      "dist/ts/status.d.ts",
+      "dist/ui/react/index.d.ts",
+      "dist/ui/react/ProgressBar.d.ts",
+      "dist/ui/react/EhrLaunch.d.ts",
+      "dist/ui/vue/index.d.ts",
+      "types/core.d.ts",
+      "types/native.d.ts",
+      "types/react.d.ts",
+      "types/assets.d.ts",
+      "types/vue-shim.d.ts",
       "README.md",
       "LICENSE.md"
    ],
