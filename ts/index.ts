@@ -4,6 +4,7 @@ import { classify, authError, completeSession, restoreSession } from "./callback
 import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./status.js"
 import { discover, buildAuthorizeUrl, savePreAuth } from "./discover.js"
 import { verifier, challenge, usePkce } from "./pkce.js"
+import { stopRefresh } from "./refresh.js"
 
 export { onProgress, getProgress, onStatus, getStatus }
 
@@ -16,9 +17,10 @@ export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | n
 
 export default fhirStarter
 
-/** Reset all module state (progress, status, listeners, iframe, expiry timer). */
+/** Reset all module state (progress, status, listeners, iframe, expiry + refresh timers). */
 export const destroy = (): void => {
    stopProgress()
+   stopRefresh()
    removeFrame?.(), (removeFrame = null)
    resetStatus()
    resetProgress()

@@ -14,12 +14,17 @@ export const setStatus = (next: EhrStatus): void => {
    statusListeners.forEach((fn) => fn(next))
 }
 
-/** Arm a one-shot timer that flips to `expired` at the handoff's fixed expiry (no refresh). */
+/** Watch the handoff's expiry, re-checking on fire so proactive refresh can extend it. */
 export const watchExpiry = (handoff: EhrHandoff): void => {
    clearExpiry()
-   const expiresAt = handoff.expiresAt
-   if (!expiresAt) return
-   expiryTimer = setTimeout(() => setStatus("expired"), Math.max(0, expiresAt - Date.now()))
+   if (!handoff.expiresAt) return
+   const tick = (): void => {
+      const remaining = handoff.expiresAt - Date.now()
+      remaining > 0
+         ? (expiryTimer = setTimeout(tick, remaining))
+         : setStatus("expired")
+   }
+   tick()
 }
 
 /** Cancel any pending expiry timer. */

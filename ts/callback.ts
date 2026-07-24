@@ -1,6 +1,7 @@
 import { setProgress, trickle, stopProgress } from "./progress.js"
 import { takePreAuth, saveSession, loadSession } from "./discover.js"
 import { exchange, toHandoff } from "./token.js"
+import { startRefresh } from "./refresh.js"
 
 /** Launch-flow phase inferred purely from the current URL's query params. */
 export const classify = (search: URLSearchParams): "launch" | "callback" | "error" | "none" => {
@@ -42,6 +43,7 @@ export const completeSession = async (
       res = await exchange(search, pre),
       handoff = toHandoff(res, pre.serverUrl, pre.params)
    saveSession(handoff)
+   startRefresh({ handoff, tokenUrl: pre.tokenUrl, clientId: pre.clientId }, res.refresh_token)
    stripCallbackParams()
    setProgress(100)
    setStatus("authenticated")

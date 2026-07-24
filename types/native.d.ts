@@ -41,6 +41,13 @@ interface AuthorizeParams {
    params?: Record<string, unknown>
 }
 
+/** Context the refresh loop needs: the live handoff to mutate and the token endpoint. */
+interface RefreshContext {
+   handoff: EhrHandoff
+   tokenUrl: string
+   clientId: string
+}
+
 /** The single pre-auth blob persisted (keyed by `state`) between authorize and callback. */
 interface PreAuthState {
    tokenUrl: string

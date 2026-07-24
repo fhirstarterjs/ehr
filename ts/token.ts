@@ -19,29 +19,32 @@ const
       }
    }
 
+/** Merge a token response into a handoff in place: present fields replace, omitted survive. */
+export const applyToken = (handoff: EhrHandoff, res: SmartTokenResponse): EhrHandoff => {
+   handoff.accessToken = res.access_token
+   handoff.expiresAt = Date.now() + (res.expires_in ?? 0) * 1_000
+   const set = (k: keyof EhrHandoff, v: unknown): void => void (v !== undefined && ((handoff[k] as unknown) = v))
+   set("scope", res.scope)
+   set("tokenType", res.token_type)
+   set("patient", res.patient)
+   set("encounter", res.encounter)
+   set("idToken", res.id_token)
+   set("needPatientBanner", res.need_patient_banner)
+   set("smartStyleUrl", res.smart_style_url)
+   flatten(handoff, res)
+   return handoff
+}
+
 /** Build the flat living `EhrHandoff` from a parsed SMART token response + launch context. */
 export const toHandoff = (
    res: SmartTokenResponse,
    serverUrl: string,
    params: Record<string, unknown> | undefined,
-): EhrHandoff => {
-   const expiresAt = Date.now() + (res.expires_in ?? 0) * 1_000
-   const handoff = {
-      serverUrl,
-      accessToken: res.access_token,
-      expiresAt,
-      scope: res.scope,
-      tokenType: res.token_type,
-      patient: res.patient,
-      encounter: res.encounter,
-      idToken: res.id_token,
-      needPatientBanner: res.need_patient_banner,
-      smartStyleUrl: res.smart_style_url,
-      params: params ? { ...params } : undefined,
-   } as EhrHandoff
-   flatten(handoff, res)
-   return handoff
-}
+): EhrHandoff =>
+   applyToken(
+      { serverUrl, params: params ? { ...params } : undefined } as EhrHandoff,
+      res,
+   )
 
 /** Exchange an authorization code for a token, validating `state` and OAuth errors first. */
 export const exchange = async (
