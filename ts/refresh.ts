@@ -56,8 +56,11 @@ const
       })())
 
 /**
- * Begin native proactive refresh when the token response carries a refresh_token.
- * Mutates the retained handoff in place on each success so every reference stays current.
+ * Begin native proactive refresh when the token response carries a refresh_token
+ * (only issued when `offline_access`/`online_access` was requested). No client secret
+ * is sent (public client). Browser refresh also requires the EHR to enable CORS on its
+ * token endpoint for this origin; when it does not, refresh fails and the session
+ * degrades to `expired` at token expiry. Mutates the retained handoff in place on success.
  */
 export const startRefresh = (ctx: RefreshContext, refreshToken: string | undefined): void => {
    if (!refreshToken) return
