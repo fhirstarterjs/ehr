@@ -48,19 +48,19 @@ wrapper you use, if any.
 import { fhirStarter } from "@fhirstarter/ehr"
 
 // Zero-config: the client id is derived from the SMART launch token by default.
-const handoff = await fhirStarter({
+const auth = await fhirStarter({
    onProgress: (percent) => updateBar(percent),
    onStatus: (status) => console.log(status),
 })
-if (handoff) {
-   const res = await fetch(`${handoff.serverUrl}/Patient/${handoff.patient}`, {
-      headers: handoff.authHeaders,
+if (auth) {
+   const res = await fetch(`${auth.serverUrl}/Patient/${auth.patient}`, {
+      headers: auth.authHeaders,
    })
 }
 ```
 
 By default no options are required. The client id is decoded from the `launch`
-token passed by the EHR. `fhirStarter()` resolves to a flat `handoff` object (or
+token passed by the EHR. `fhirStarter()` resolves to a flat `auth` object (or
 `null` when there is no launch context) whose fields you read directly:
 `serverUrl`, `accessToken`, `expiresAt`, and launch context like `patient`,
 `encounter`, `scope`, and `idToken`. Hand it off to any FHIR library or plain
@@ -101,7 +101,7 @@ S256 (mandated by SMART v2). Use `"ifSupported"` for legacy SMART v1 servers, or
 
 When you request `online_access` or `offline_access` and the EHR returns a
 refresh token, `fhirStarter()` proactively refreshes in the background and
-updates the same `handoff` object in place, so any reference you hold stays
+updates the same `auth` object in place, so any reference you hold stays
 current. No client secret is ever sent (this is a public client; PKCE replaces
 it), and the refresh token is kept in memory only, never persisted.
 
@@ -130,46 +130,46 @@ prompting the user to close and relaunch from the EHR. Override its text via the
 
 ## Bring your own client
 
-The `handoff` is a flat, data-only object. Read its fields directly and hand off
-to any FHIR library or plain `fetch`:
+The `auth` result is a flat, data-only object. Read its fields directly and hand
+off to any FHIR library or plain `fetch`:
 
 ```ts
 import { fhirStarter } from "@fhirstarter/ehr"
 
-const handoff = await fhirStarter()
-if (handoff) {
+const auth = await fhirStarter()
+if (auth) {
    // Raw fetch:
-   const res = await fetch(`${handoff.serverUrl}/Patient/${handoff.patient}`, {
-      headers: handoff.authHeaders,
+   const res = await fetch(`${auth.serverUrl}/Patient/${auth.patient}`, {
+      headers: auth.authHeaders,
    })
 
    // Or fhir-kit-client:
-   // const kit = new Client({ baseUrl: handoff.serverUrl })
-   // kit.bearerToken = handoff.accessToken
+   // const kit = new Client({ baseUrl: auth.serverUrl })
+   // kit.bearerToken = auth.accessToken
 }
 ```
 
 Still using [`fhirclient`](https://www.npmjs.com/package/fhirclient)? The
-`handoff.fhirClient` field is a ready-to-spread `FHIR.client(...)` argument that
+`auth.fhirClient` field is a ready-to-spread `FHIR.client(...)` argument that
 carries the live token plus launch context (`patient`, `encounter`, `fhirUser`):
 
 ```ts
 import FHIR from "fhirclient"
 import { fhirStarter } from "@fhirstarter/ehr"
 
-const handoff = await fhirStarter()
-if (handoff) {
-   const client = FHIR.client(handoff.fhirClient)
+const auth = await fhirStarter()
+if (auth) {
+   const client = FHIR.client(auth.fhirClient)
    const patient = await client.request(`Patient/${client.patient.id}`)
 }
 ```
 
-Handoff fields: `serverUrl`, `accessToken`, `expiresAt` (epoch ms), plus launch
+Result fields: `serverUrl`, `accessToken`, `expiresAt` (epoch ms), plus launch
 context such as `patient`, `encounter`, `scope`, `tokenType`, `idToken`,
 `needPatientBanner`, and `smartStyleUrl` when the EHR provides them. `authHeaders`
 is `{ Authorization }` when authed or `{}` otherwise; `fhirClient` spreads into
 `FHIR.client(...)`. Any custom `params` you configured are echoed back on
-`handoff.params`.
+`auth.params`.
 
 ## Components
 
@@ -187,8 +187,8 @@ import { EhrLaunch } from "@fhirstarter/ehr/vue"
 </script>
 
 <template>
-   <EhrLaunch v-slot="{ handoff }">
-      <YourApp :handoff="handoff" />
+   <EhrLaunch v-slot="{ handoff: auth }">
+      <YourApp :auth="auth" />
    </EhrLaunch>
 </template>
 ```
@@ -209,8 +209,8 @@ import logo from "./logo.svg"
       <template #header><img :src="logo" alt="" /></template>
 
       <!-- With multiple named slots, use explicit <template> for the default slot too. -->
-      <template #default="{ handoff }">
-         <YourApp :handoff="handoff" />
+      <template #default="{ handoff: auth }">
+         <YourApp :auth="auth" />
       </template>
    </EhrLaunch>
 </template>
@@ -221,7 +221,7 @@ Or headless with the composable:
 ```ts
 import { useEhrLaunch } from "@fhirstarter/ehr/vue"
 
-const { state, handoff, percent, error, loading } = useEhrLaunch()
+const { state, handoff: auth, percent, error, loading } = useEhrLaunch()
 ```
 
 ### React
@@ -233,7 +233,7 @@ Zero config, client id derived from the launch token:
 import { EhrLaunch } from "@fhirstarter/ehr/react"
 
 export const App = () => (
-   <EhrLaunch>{({ handoff }) => <YourApp handoff={handoff} />}</EhrLaunch>
+   <EhrLaunch>{({ handoff: auth }) => <YourApp auth={auth} />}</EhrLaunch>
 )
 ```
 
@@ -249,7 +249,7 @@ export const App = () => (
       options={{ clientId: "my-client-id" }}  // any EhrLaunchOptions
       header={<img src={logo} alt="" />}
    >
-      {({ handoff }) => <YourApp handoff={handoff} />}
+      {({ handoff: auth }) => <YourApp auth={auth} />}
    </EhrLaunch>
 )
 ```
@@ -259,7 +259,7 @@ Or headless with the hook:
 ```tsx
 import { useEhrLaunch } from "@fhirstarter/ehr/react"
 
-const { state, handoff, percent, error, loading } = useEhrLaunch()
+const { state, handoff: auth, percent, error, loading } = useEhrLaunch()
 ```
 
 ### `EhrLaunch` props
@@ -273,7 +273,7 @@ const { state, handoff, percent, error, loading } = useEhrLaunch()
 | label | `#label` slot | `label` node | Overrides the bar's status text. |
 | error | `#error` slot | `error(err)` render prop | Custom error display; defaults to the message. |
 | expired | `#expired` slot | `expired` node | Overrides the session-expired toast content. |
-| authenticated content | default `v-slot="{ handoff, state, error }"` | `children({ handoff, state, error })` | Rendered after auth completes. |
+| authenticated content | default `v-slot="{ handoff, state, error }"` | `children({ handoff, state, error })` | Rendered after auth completes. The `handoff` key is the auth result — alias it locally, e.g. `{ handoff: auth }`. |
 
 ### Styling
 
