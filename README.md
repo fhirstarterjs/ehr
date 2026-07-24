@@ -4,12 +4,13 @@
 [![CI](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/ci.yml)
 [![Publish](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml/badge.svg)](https://github.com/fhirstarterjs/ehr/actions/workflows/publish.yml)
 
-A thin, plug-and-play SMART on FHIR **EHR-launch** library. It runs the launch
-flow end to end. Authorization happens in the background without ever navigating
-away from your app, your client ID is auto-detected from the launch (so there's
-nothing to configure), progress and status are reported live, and turnkey
-Vue/React components are included. When it's done, you get an authorized client
-for **any** FHIR library or plain `fetch`.
+A thin, plug-and-play SMART on FHIR **EHR-launch** library with no runtime
+dependencies. It runs the launch flow end to end using native SMART App Launch
+(discovery, PKCE, token exchange). Authorization happens in the background
+without ever navigating away from your app, your client ID is auto-detected from
+the launch (so there's nothing to configure), progress and status are reported
+live, and turnkey Vue/React components are included. When it's done, you get a
+flat, authorized handoff for **any** FHIR library or plain `fetch`.
 
 Targets SMART App Launch 2.2.0 (STU 2.2) with SMART v1 backwards compatability
 
@@ -24,7 +25,7 @@ Targets SMART App Launch 2.2.0 (STU 2.2) with SMART v1 backwards compatability
 - [Quick start](#quick-start)
 - [Modes](#modes)
 - [Options](#options)
-- [Session expiry](#session-expiry)
+- [Session expiry and refresh](#session-expiry-and-refresh)
 - [Bring your own client](#bring-your-own-client)
 - [Components](#components)
   - [Vue](#vue)
@@ -35,12 +36,11 @@ Targets SMART App Launch 2.2.0 (STU 2.2) with SMART v1 backwards compatability
 ## Install
 
 ```sh
-npm install @fhirstarter/ehr fhirclient
+npm install @fhirstarter/ehr
 ```
 
-The launch flow runs on [`fhirclient`](https://www.npmjs.com/package/fhirclient),
-so it is a required peer (npm 7+ installs it automatically). `vue` and `react`
-are optional peers; install whichever wrapper you use, if any.
+No runtime dependencies. `vue` and `react` are optional peers; install whichever
+wrapper you use, if any.
 
 ## Quick start
 
@@ -48,23 +48,25 @@ are optional peers; install whichever wrapper you use, if any.
 import { fhirStarter } from "@fhirstarter/ehr"
 
 // Zero-config: the client id is derived from the SMART launch token by default.
-const client = await fhirStarter({
+const handoff = await fhirStarter({
    onProgress: (percent) => updateBar(percent),
    onStatus: (status) => console.log(status),
 })
-if (client) {
-   const patient = await client.request(`Patient/${client.patient.id}`)
+if (handoff) {
+   const res = await fetch(`${handoff.serverUrl}/Patient/${handoff.patient}`, {
+      headers: handoff.authHeaders,
+   })
 }
 ```
 
 By default no options are required. The client id is decoded from the `launch`
-token passed by the EHR. `fhirStarter()` returns a ready-to-use `fhirclient`
-client (or `null` when there is no launch context), so `request()`, `patient`,
-`user`, and `state` all work out of the box. Prefer a different FHIR client? Hand
-the completed auth off to any library or plain `fetch` instead (see
-[Bring your own client](#bring-your-own-client)). `fhirStarter` is also the
-default export, and `onProgress`/`onStatus` are exported as standalone subscribe
-functions if you prefer.
+token passed by the EHR. `fhirStarter()` resolves to a flat `handoff` object (or
+`null` when there is no launch context) whose fields you read directly:
+`serverUrl`, `accessToken`, `expiresAt`, and launch context like `patient`,
+`encounter`, `scope`, and `idToken`. Hand it off to any FHIR library or plain
+`fetch` (see [Bring your own client](#bring-your-own-client)). `fhirStarter` is
+also the default export, and `onProgress`/`onStatus` are exported as standalone
+subscribe functions if you prefer.
 
 ## Modes
 
@@ -79,22 +81,35 @@ functions if you prefer.
 | --- | --- |
 | `clientId` | Static client id. Optional; derived from the launch token by default. |
 | `resolveClientId` | Async `(ctx) => id` resolver, given `{ iss, launch }`, for per-launch schemes. |
-| `scopes` | Scope string or array, forwarded verbatim (SMART v1 or v2). |
+| `scopes` | Scope string or array (SMART v1 or v2). |
+| `pkce` | `"required"` (default), `"ifSupported"`, or `"disabled"`. See below. |
 | `redirectUri` | Defaults to the current window origin. |
 | `iframe` | `false` for the redirect flow. Default `true`. |
 | `debug` / `showIframe` | Console diagnostics / make the auth iframe visible. |
 | `authorizeMs` / `exchangeMs` | Progress pacing hints. |
 | `iframeParent` / `iframeClass` / `iframeStyle` | Auth iframe placement/styling. |
-| `fhir` | Passthrough object merged into the `oauth2.authorize` call (e.g. `pkceMode`, `issMatch`, `clientSecret`, `clientPrivateJwk`). |
+| `params` | Extra authorization request parameters. Reserved OAuth/SMART keys are ignored. |
 
 Client id resolves in order: explicit `clientId` → `resolveClientId` → SMART
 launch-JWT decode (the default, no config needed).
 
-## Session expiry
+`pkce` defaults to `"required"`: the launch fails if the server does not advertise
+S256 (mandated by SMART v2). Use `"ifSupported"` for legacy SMART v1 servers, or
+`"disabled"` to opt out entirely.
 
-Browser (public) clients cannot safely refresh SMART tokens, so `fhirStarter()`
-schedules a timer for the token's fixed expiry and emits the `"expired"` status
-when it fires, regardless of whether you use the components:
+## Session expiry and refresh
+
+When you request `online_access` or `offline_access` and the EHR returns a
+refresh token, `fhirStarter()` proactively refreshes in the background and
+updates the same `handoff` object in place, so any reference you hold stays
+current. No client secret is ever sent (this is a public client; PKCE replaces
+it), and the refresh token is kept in memory only, never persisted.
+
+Browser refresh also depends on the EHR enabling CORS on its token endpoint for
+your registered origin (SMART App Launch §2.1.2.4). Many EHRs do not, in which
+case refresh fails and the session simply expires at the token's lifetime. When
+no refresh token is issued, the token is one-shot and `fhirStarter()` emits the
+`"expired"` status at expiry:
 
 ```ts
 import { fhirStarter, onStatus } from "@fhirstarter/ehr"
@@ -112,40 +127,46 @@ prompting the user to close and relaunch from the EHR. Override its text via the
 
 ## Bring your own client
 
-Once authorized, you are not tied to any particular FHIR client. Hand the result
-off to any FHIR library or plain `fetch` by reading a few fields from the
-returned `client.state`.
-
-Pass only the fields you need. **Never** spread the whole `client.state`; it can
-contain PKCE material and other sensitive values:
+The `handoff` is a flat, data-only object. Read its fields directly and hand off
+to any FHIR library or plain `fetch`:
 
 ```ts
 import { fhirStarter } from "@fhirstarter/ehr"
 
-const client = await fhirStarter()
-if (client) {
-   const
-      serverUrl = client.state.serverUrl,
-      token = client.state.tokenResponse?.access_token
-
+const handoff = await fhirStarter()
+if (handoff) {
    // Raw fetch:
-   const res = await fetch(`${serverUrl}/Patient/${client.patient.id}`, {
-      headers: token ? { authorization: `Bearer ${token}` } : {},
+   const res = await fetch(`${handoff.serverUrl}/Patient/${handoff.patient}`, {
+      headers: handoff.authHeaders,
    })
 
    // Or fhir-kit-client:
-   // const kit = new Client({ baseUrl: serverUrl })
-   // kit.bearerToken = token
+   // const kit = new Client({ baseUrl: handoff.serverUrl })
+   // kit.bearerToken = handoff.accessToken
 }
 ```
 
-`state.expiresAt` (epoch seconds) is also available if you want to track expiry
-yourself.
+Still using [`fhirclient`](https://www.npmjs.com/package/fhirclient)? The
+`handoff.fhirClient` field is a ready-to-spread `FHIR.client(...)` argument that
+carries the live token plus launch context (`patient`, `encounter`, `fhirUser`):
 
-> Under the hood the launch flow is powered by
-> [`fhirclient`](https://www.npmjs.com/package/fhirclient) (a required peer). You
-> rarely touch it directly, but that is why `client` and `client.state` follow
-> its shape.
+```ts
+import FHIR from "fhirclient"
+import { fhirStarter } from "@fhirstarter/ehr"
+
+const handoff = await fhirStarter()
+if (handoff) {
+   const client = FHIR.client(handoff.fhirClient)
+   const patient = await client.request(`Patient/${client.patient.id}`)
+}
+```
+
+Handoff fields: `serverUrl`, `accessToken`, `expiresAt` (epoch ms), plus launch
+context such as `patient`, `encounter`, `scope`, `tokenType`, `idToken`,
+`needPatientBanner`, and `smartStyleUrl` when the EHR provides them. `authHeaders`
+is `{ Authorization }` when authed or `{}` otherwise; `fhirClient` spreads into
+`FHIR.client(...)`. Any custom `params` you configured are echoed back on
+`handoff.params`.
 
 ## Components
 
@@ -163,8 +184,8 @@ import { EhrLaunch } from "@fhirstarter/ehr/vue"
 </script>
 
 <template>
-   <EhrLaunch v-slot="{ client }">
-      <YourApp :client="client" />
+   <EhrLaunch v-slot="{ handoff }">
+      <YourApp :handoff="handoff" />
    </EhrLaunch>
 </template>
 ```
@@ -185,8 +206,8 @@ import logo from "./logo.svg"
       <template #header><img :src="logo" alt="" /></template>
 
       <!-- With multiple named slots, use explicit <template> for the default slot too. -->
-      <template #default="{ client }">
-         <YourApp :client="client" />
+      <template #default="{ handoff }">
+         <YourApp :handoff="handoff" />
       </template>
    </EhrLaunch>
 </template>
@@ -197,7 +218,7 @@ Or headless with the composable:
 ```ts
 import { useEhrLaunch } from "@fhirstarter/ehr/vue"
 
-const { state, client, percent, error, loading } = useEhrLaunch()
+const { state, handoff, percent, error, loading } = useEhrLaunch()
 ```
 
 ### React
@@ -209,7 +230,7 @@ Zero config, client id derived from the launch token:
 import { EhrLaunch } from "@fhirstarter/ehr/react"
 
 export const App = () => (
-   <EhrLaunch>{({ client }) => <YourApp client={client} />}</EhrLaunch>
+   <EhrLaunch>{({ handoff }) => <YourApp handoff={handoff} />}</EhrLaunch>
 )
 ```
 
@@ -225,7 +246,7 @@ export const App = () => (
       options={{ clientId: "my-client-id" }}  // any EhrLaunchOptions
       header={<img src={logo} alt="" />}
    >
-      {({ client }) => <YourApp client={client} />}
+      {({ handoff }) => <YourApp handoff={handoff} />}
    </EhrLaunch>
 )
 ```
@@ -235,7 +256,7 @@ Or headless with the hook:
 ```tsx
 import { useEhrLaunch } from "@fhirstarter/ehr/react"
 
-const { state, client, percent, error, loading } = useEhrLaunch()
+const { state, handoff, percent, error, loading } = useEhrLaunch()
 ```
 
 ### `EhrLaunch` props

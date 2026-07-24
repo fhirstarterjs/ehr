@@ -1,7 +1,7 @@
 {
    "name": "@fhirstarter/ehr",
    "version": "0.2.0",
-   "description": "Thin, plug-and-play SMART on FHIR EHR-launch library. Runs the launch in the background with live progress and turnkey Vue/React components, then hands off an authorized client for any FHIR library.",
+   "description": "Thin, plug-and-play SMART on FHIR EHR-launch library with no runtime deps. Runs native SMART App Launch in the background with live progress and turnkey Vue/React components, then hands off a flat authorized result for any FHIR library.",
    "license": "Kopimi",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
    "keywords": [
