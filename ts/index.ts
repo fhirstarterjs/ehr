@@ -39,11 +39,11 @@ const
    log = (message: string, detail?: unknown): void =>
       void (options.debug && console.info(`[fhirstarter:ehr] ${message}`, detail ?? "")),
 
-   scopeString = (): string | undefined => {
-      const raw = options.scopes
-      if (raw === undefined) return undefined
-      const list = [...new Set((Array.isArray(raw) ? raw : raw.split(/\s+/)).filter(Boolean))]
-      return list.length ? list.join(" ") : undefined
+   scopeString = (): string => {
+      const
+         raw = options.scopes ?? [],
+         list = [...new Set(["launch", ...(Array.isArray(raw) ? raw : raw.split(/\s+/))].filter(Boolean))]
+      return list.join(" ")
    },
 
    fail = (err: unknown): never => {
