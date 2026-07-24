@@ -14,12 +14,12 @@ export const setStatus = (next: EhrStatus): void => {
    statusListeners.forEach((fn) => fn(next))
 }
 
-/** Arm a one-shot timer that flips to `expired` at the token's fixed expiry (no refresh). */
-export const watchExpiry = (client: SmartClient): void => {
+/** Arm a one-shot timer that flips to `expired` at the handoff's fixed expiry (no refresh). */
+export const watchExpiry = (handoff: EhrHandoff): void => {
    clearExpiry()
-   const expiresAt = client.state.expiresAt
+   const expiresAt = handoff.expiresAt
    if (!expiresAt) return
-   expiryTimer = setTimeout(() => setStatus("expired"), Math.max(0, expiresAt * 1_000 - Date.now()))
+   expiryTimer = setTimeout(() => setStatus("expired"), Math.max(0, expiresAt - Date.now()))
 }
 
 /** Cancel any pending expiry timer. */

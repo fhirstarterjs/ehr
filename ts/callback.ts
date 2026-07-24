@@ -1,4 +1,6 @@
 import { setProgress, trickle, stopProgress } from "./progress.js"
+import { takePreAuth, saveSession, loadSession } from "./discover.js"
+import { exchange, toHandoff } from "./token.js"
 
 /** Launch-flow phase inferred purely from the current URL's query params. */
 export const classify = (search: URLSearchParams): "launch" | "callback" | "error" | "none" => {
@@ -25,46 +27,42 @@ export const authError = (search: URLSearchParams, cause?: unknown): EhrAuthErro
    return err
 }
 
-/** Complete a callback in the current window without requiring URL navigation. */
+/** Complete a native callback: validate `state`, exchange the code, build the handoff. */
 export const completeSession = async (
    search: URLSearchParams,
    options: EhrLaunchOptions,
    setStatus: (status: EhrStatus) => void,
-): Promise<SmartClient> => {
-   const { oauth2 } = await import("fhirclient")
+): Promise<EhrHandoff> => {
+   const pre = takePreAuth(search.get("state") ?? "")
+   if (!pre) throw authError(search, "unknown or missing state (possible CSRF)")
    setStatus("authorized")
    setProgress(50)
    trickle(50, 95, options.exchangeMs ?? 3_000)
-   const client = await oauth2.ready({
-      code: search.get("code") ?? undefined,
-      stateKey: search.get("state") ?? undefined,
-   })
-   stripLaunchParams()
+   const
+      res = await exchange(search, pre),
+      handoff = toHandoff(res, pre.serverUrl, pre.params)
+   saveSession(handoff)
+   stripCallbackParams()
    setProgress(100)
    setStatus("authenticated")
-   return client
+   return handoff
 }
 
-/** Restore fhirclient's persisted session, returning null when none exists. */
+/** Restore a persisted (unexpired) session snapshot, or null when none exists. */
 export const restoreSession = async (
    setStatus: (status: EhrStatus) => void,
    log: (message: string, detail?: unknown) => void,
-): Promise<SmartClient | null> => {
-   try {
-      const { oauth2 } = await import("fhirclient")
-      return await oauth2.ready()
-   } catch (err) {
-      stopProgress()
-      setStatus("idle")
-      log("no existing session", err)
-      return null
-   }
+): Promise<EhrHandoff | null> => {
+   const handoff = loadSession()
+   if (handoff) return handoff
+   stopProgress()
+   setStatus("idle")
+   log("no existing session")
+   return null
 }
 
-const stripLaunchParams = (): void => {
+const stripCallbackParams = (): void => {
    const url = new URL(window.location.href)
-   if (!url.searchParams.has("iss") && !url.searchParams.has("launch")) return
-   url.searchParams.delete("iss")
-   url.searchParams.delete("launch")
+   for (const p of ["iss", "launch", "code", "state"]) url.searchParams.delete(p)
    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`)
 }

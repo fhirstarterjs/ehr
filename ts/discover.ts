@@ -1,5 +1,10 @@
 const
    KEY_PREFIX = "fhirstarter:ehr:",
+   SESSION_KEY = `${KEY_PREFIX}session`,
+   RESERVED_AUTH = new Set([
+      "response_type", "client_id", "redirect_uri", "scope", "state",
+      "aud", "launch", "code_challenge", "code_challenge_method",
+   ]),
 
    preAuthKey = (state: string): string => `${KEY_PREFIX}pre:${state}`,
 
@@ -15,6 +20,24 @@ const
       return { authorizeUrl, tokenUrl }
    }
 
+/** Build the SMART authorize URL, protecting reserved OAuth/SMART keys from `params`. */
+export const buildAuthorizeUrl = (authorizeUrl: string, req: AuthorizeParams): string => {
+   const url = new URL(authorizeUrl)
+   const set = (k: string, v: string | undefined): void => void (v && url.searchParams.set(k, v))
+   set("response_type", "code")
+   set("client_id", req.clientId)
+   set("redirect_uri", req.redirectUri)
+   set("scope", req.scope)
+   set("state", req.state)
+   set("aud", req.aud)
+   set("launch", req.launch)
+   set("code_challenge", req.codeChallenge)
+   req.codeChallenge && set("code_challenge_method", "S256")
+   for (const [k, v] of Object.entries(req.params ?? {}))
+      !RESERVED_AUTH.has(k) && url.searchParams.set(k, String(v))
+   return url.href
+}
+
 /** Persist the one pre-auth blob under a state-namespaced sessionStorage key. */
 export const savePreAuth = (blob: PreAuthState): void =>
    sessionStorage.setItem(preAuthKey(blob.state), JSON.stringify(blob))
@@ -26,6 +49,22 @@ export const takePreAuth = (state: string): PreAuthState | null => {
    sessionStorage.removeItem(key)
    try {
       return JSON.parse(raw) as PreAuthState
+   } catch {
+      return null
+   }
+}
+
+/** Persist the authenticated handoff snapshot for same-page session restore. */
+export const saveSession = (handoff: EhrHandoff): void =>
+   sessionStorage.setItem(SESSION_KEY, JSON.stringify(handoff))
+
+/** Read the persisted handoff snapshot, or null when none exists or it is expired. */
+export const loadSession = (): EhrHandoff | null => {
+   const raw = sessionStorage.getItem(SESSION_KEY)
+   if (!raw) return null
+   try {
+      const h = JSON.parse(raw) as EhrHandoff
+      return h.expiresAt && Date.now() < h.expiresAt ? h : (sessionStorage.removeItem(SESSION_KEY), null)
    } catch {
       return null
    }

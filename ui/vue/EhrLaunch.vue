@@ -12,7 +12,7 @@
       <slot name="error" :error="error">{{ error.message }}</slot>
    </div>
 
-   <slot v-if="client && !showBar" :client="client" :state="state" :error="error" />
+   <slot v-if="handoff && !showBar" :handoff="handoff" :state="state" :error="error" />
 
    <div v-if="expired" class="fs-ehr-expired">
       <div class="fs-ehr-expired__pill" role="alert" :title="EXPIRED_HINT">
@@ -33,7 +33,7 @@ const
    props = withDefaults(
       defineProps<{ options?: EhrLaunchOptions, completionDelayMs?: number, showStatus?: boolean }>(),
       { options: () => ({}), completionDelayMs: 500, showStatus: true }),
-   { state, client, percent, error, loading } = useEhrLaunch(props.options),
+   { state, handoff, percent, error, loading } = useEhrLaunch(props.options),
    showBar = ref(true),
    expired = ref(false)
 

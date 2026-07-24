@@ -14,7 +14,7 @@ export { EhrLaunch } from "./EhrLaunch.js"
 export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => {
    const
       [state, setState] = useState<EhrStatus>("initializing"),
-      [client, setClient] = useState<SmartClient | null>(null),
+      [handoff, setHandoff] = useState<EhrHandoff | null>(null),
       [percent, setPercent] = useState(0),
       [error, setError] = useState<EhrAuthError | null>(null),
       [loading, setLoading] = useState(true),
@@ -26,10 +26,10 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => 
          offStatus = onStatus((s) => alive && setState(s)),
          offProgress = onProgress((p) => alive && setPercent(p))
       fhirStarter(opts.current)
-         .then((c) => alive && (setClient(c), setLoading(false)))
+         .then((h) => alive && (setHandoff(h), setLoading(false)))
          .catch((e) => alive && (setError(e as EhrAuthError), setLoading(false)))
       return () => void (alive = false, offStatus(), offProgress())
    }, [])
 
-   return { state, client, percent, error, loading }
+   return { state, handoff, percent, error, loading }
 }

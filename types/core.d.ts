@@ -3,9 +3,6 @@
  * these names directly; no import is needed.
  */
 
-/** fhirclient `Client` instance returned on a successful launch. */
-type SmartClient = ReturnType<typeof import("fhirclient").client>
-
 /** Launch-phase lifecycle status, derived from the URL on each page load. */
 type EhrStatus =
    | "initializing"
@@ -53,8 +50,8 @@ interface EhrLaunchOptions {
    iframeClass?: string | string[]
    /** Inline styles applied after defaults, overriding them. */
    iframeStyle?: string | Partial<CSSStyleDeclaration>
-   /** Passthrough fhirclient options merged into the authorize call. */
-   fhir?: Record<string, unknown>
+   /** Extra authorization request parameters; reserved OAuth/SMART keys are ignored. */
+   params?: Record<string, unknown>
    /** Progress callback (0–100), subscribed for this launch. */
    onProgress?: ProgressListener
    /** Status callback, subscribed for this launch. */

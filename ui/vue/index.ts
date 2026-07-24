@@ -3,6 +3,7 @@
 import { ref, shallowRef, onMounted, onUnmounted } from "vue"
 import type { ShallowRef } from "vue"
 import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
+// EhrHandoff is an ambient global type from ../../types
 
 export { default as ProgressBar } from "./ProgressBar.vue"
 export { default as EhrLaunch } from "./EhrLaunch.vue"
@@ -15,7 +16,7 @@ export { default as EhrLaunch } from "./EhrLaunch.vue"
 export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
    const
       state = ref<EhrStatus>("initializing"),
-      client = shallowRef(null) as unknown as ShallowRef<SmartClient | null>,
+      handoff = shallowRef(null) as unknown as ShallowRef<EhrHandoff | null>,
       percent = ref(0),
       error = ref<EhrAuthError | null>(null),
       loading = ref(true)
@@ -28,9 +29,9 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
          offProgress = onProgress((p) => alive && (percent.value = p))
       onUnmounted(() => (alive = false, offStatus(), offProgress()))
       fhirStarter(options)
-         .then((c) => alive && ((client.value = c), (loading.value = false)))
+         .then((h) => alive && ((handoff.value = h), (loading.value = false)))
          .catch((e) => alive && ((error.value = e as EhrAuthError), (loading.value = false)))
    })
 
-   return { state, client, percent, error, loading }
+   return { state, handoff, percent, error, loading }
 }

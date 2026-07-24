@@ -29,6 +29,18 @@ interface FhirCapabilityStatement {
    }[]
 }
 
+/** Inputs for building the SMART authorize URL. Reserved keys override `params`. */
+interface AuthorizeParams {
+   clientId: string
+   redirectUri: string
+   state: string
+   aud: string
+   scope?: string
+   launch?: string
+   codeChallenge?: string
+   params?: Record<string, unknown>
+}
+
 /** The single pre-auth blob persisted (keyed by `state`) between authorize and callback. */
 interface PreAuthState {
    tokenUrl: string

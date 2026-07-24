@@ -6,7 +6,7 @@
 /** Result returned by the React `useEhrLaunch` hook. */
 interface ReactEhrLaunch {
    state: EhrStatus
-   client: SmartClient | null
+   handoff: EhrHandoff | null
    percent: number
    error: EhrAuthError | null
    loading: boolean
@@ -32,7 +32,7 @@ interface ReactEhrLaunchProps {
    error?: (error: EhrAuthError) => import("react").ReactNode
    expired?: import("react").ReactNode
    children?: (result: {
-      client: SmartClient
+      handoff: EhrHandoff
       state: EhrStatus
       error: EhrAuthError | null
    }) => import("react").ReactNode

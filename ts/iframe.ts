@@ -18,7 +18,7 @@ export const resolveClientId = async (
    return id
 }
 
-/** Mount a named auth iframe and return `{ target, remove }`; `target` is a fhirclient target fn. */
+/** Mount a named auth iframe and return `{ navigate, callback, remove }`. */
 export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown) => void) => {
    const
       name = `fhirstarter-${Math.random().toString(36).slice(2, 8)}`,
@@ -56,11 +56,7 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
    return {
       remove: (): void => frame.remove(),
       callback,
-      target: (): string => {
-         if (!window.frames[name as unknown as number])
-            log("iframe NOT resolvable by name — fhirclient will fall back to _self", name)
-         return name
-      },
+      navigate: (url: string): void => void (frame.src = url),
    }
 }
 

@@ -2,14 +2,16 @@ import { onProgress, getProgress, trickle, stopProgress, resetProgress } from ".
 import { resolveClientId, mountIframe, forwardCallback } from "./iframe.js"
 import { classify, authError, completeSession, restoreSession } from "./callback.js"
 import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./status.js"
+import { discover, buildAuthorizeUrl, savePreAuth } from "./discover.js"
+import { verifier, challenge, usePkce } from "./pkce.js"
 
 export { onProgress, getProgress, onStatus, getStatus }
 
 /** Begin (or reuse) the one-shot SMART EHR launch for this page load. Idempotent. */
-export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<SmartClient | null> => {
+export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | null> => {
    if (started) return started
    options = opts, opts.onProgress && onProgress(opts.onProgress), opts.onStatus && onStatus(opts.onStatus)
-   return (started = run().then((client) => (client && watchExpiry(client), client)).catch(fail))
+   return (started = run().then((h) => (h && watchExpiry(h), h)).catch(fail))
 }
 
 export default fhirStarter
@@ -26,7 +28,7 @@ export const destroy = (): void => {
 
 let
    options: EhrLaunchOptions = {},
-   started: Promise<SmartClient | null> | null = null,
+   started: Promise<EhrHandoff | null> | null = null,
    removeFrame: (() => void) | null = null
 
 const
@@ -50,40 +52,45 @@ const
       throw err
    },
 
-   authorize = async (search: URLSearchParams): Promise<SmartClient | null> => {
+   authorizeUrl = async (search: URLSearchParams): Promise<string> => {
       const
-         { oauth2 } = await import("fhirclient"),
          iss = search.get("iss") ?? "",
          launch = search.get("launch") ?? "",
          clientId = await resolveClientId(options, { iss, launch }),
          redirectUri = options.redirectUri ?? window.location.origin,
          scope = scopeString(),
-         useIframe = options.iframe !== false
+         config = await discover(iss),
+         pkce = usePkce(options.pkce, config.pkceMethods),
+         codeVerifier = pkce ? verifier() : undefined,
+         codeChallenge = codeVerifier ? await challenge(codeVerifier) : undefined,
+         state = crypto.randomUUID()
+      savePreAuth({
+         tokenUrl: config.tokenUrl, state, redirectUri, clientId, serverUrl: iss,
+         scope, verifier: codeVerifier, params: options.params,
+      })
+      return buildAuthorizeUrl(config.authorizeUrl, {
+         clientId, redirectUri, state, aud: iss, scope, launch, codeChallenge, params: options.params,
+      })
+   },
+
+   authorize = async (search: URLSearchParams): Promise<EhrHandoff | null> => {
       setStatus("authorizing")
       trickle(5, 50, options.authorizeMs ?? 4_000)
-      log("redirect_uri", redirectUri)
-      const params: Record<string, unknown> = {
-         client_id: clientId,
-         redirect_uri: redirectUri,
-         ...(scope ? { scope } : {}),
-         ...options.fhir,
-      }
-      if (useIframe) {
+      const url = await authorizeUrl(search)
+      if (options.iframe !== false) {
          const frame = mountIframe(options, log)
          removeFrame = frame.remove
-         params.completeInTarget = true
-         params.target = frame.target
-         await oauth2.authorize(params as Parameters<typeof oauth2.authorize>[0])
+         frame.navigate(url)
          const callbackUrl = await frame.callback
          if (classify(callbackUrl.searchParams) === "error")
             return fail(authError(callbackUrl.searchParams))
          return completeSession(callbackUrl.searchParams, options, setStatus)
       }
-      await oauth2.authorize(params as Parameters<typeof oauth2.authorize>[0])
+      window.location.assign(url)
       return null
    },
 
-   run = async (): Promise<SmartClient | null> => {
+   run = async (): Promise<EhrHandoff | null> => {
       const search = new URL(window.location.href).searchParams
       switch (classify(search)) {
          case "error":
@@ -96,9 +103,9 @@ const
                : completeSession(search, options, setStatus)
          case "launch": return authorize(search)
          default: {
-            const client = await restoreSession(setStatus, log)
-            client && setStatus("authenticated")
-            return client
+            const handoff = await restoreSession(setStatus, log)
+            handoff && setStatus("authenticated")
+            return handoff
          }
       }
    }

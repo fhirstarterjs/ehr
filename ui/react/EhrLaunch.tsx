@@ -10,7 +10,7 @@ const EXPIRED_HINT =
 
 /**
  * Runs the launch, shows the progress bar until `completionDelayMs` after
- * completion, then renders `children({ client, state, error })`. Errors render
+ * completion, then renders `children({ handoff, state, error })`. Errors render
  * via the `error` render prop or a default message.
  */
 export const EhrLaunch = ({
@@ -24,7 +24,7 @@ export const EhrLaunch = ({
    children,
 }: ReactEhrLaunchProps) => {
    const
-      { state, client, percent, error, loading } = useEhrLaunch(options),
+      { state, handoff, percent, error, loading } = useEhrLaunch(options),
       [showBar, setShowBar] = useState(true),
       [expired, setExpired] = useState(false)
 
@@ -49,7 +49,7 @@ export const EhrLaunch = ({
          {error ? (
             <div className="fs-ehr-error">{errorRender ? errorRender(error) : error.message}</div>
          ) : null}
-         {client && !showBar ? children?.({ client, state, error }) : null}
+         {handoff && !showBar ? children?.({ handoff, state, error }) : null}
          {expired ? (
             <div className="fs-ehr-expired">
                <div className="fs-ehr-expired__pill" role="alert" title={EXPIRED_HINT}>
