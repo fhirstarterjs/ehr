@@ -35,7 +35,7 @@ const config = {
          formats: ["es"],
       },
       rolldownOptions: {
-         external: ["fhirclient", "vue", "react", "react/jsx-runtime"],
+         external: ["vue", "react", "react/jsx-runtime"],
          output: {
             assetFileNames: "style.css",
             chunkFileNames: "core.js",
