@@ -34,7 +34,7 @@ interface EhrLaunchOptions {
    /** PKCE policy. `required` (default) fails without S256; `ifSupported`/`disabled` relax it. */
    pkce?: PkceMode
    /** Redirect URI; defaults to the current origin + path (`location.origin +
-       location.pathname`) so it matches the launch route Epic registered. */
+       location.pathname`) so it matches the registered launch route. */
    redirectUri?: string
    /** `false` uses a full top-level redirect instead of the hidden iframe. */
    iframe?: boolean

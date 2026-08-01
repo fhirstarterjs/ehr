@@ -73,9 +73,6 @@ const
          iss = search.get("iss") ?? "",
          launch = search.get("launch") ?? "",
          clientId = await resolveClientId(options, { iss, launch }),
-         // Default to the current path (origin + pathname), NOT bare origin —
-         // Epic requires the redirect_uri to exactly match the registered URI,
-         // which includes the launch route's path (e.g. `/dashboard/`).
          redirectUri = options.redirectUri ?? `${location.origin}${location.pathname}`,
          scope = scopeString(),
          config = await discover(iss),
