@@ -18,14 +18,10 @@ export { default as EhrLaunch } from "./EhrLaunch.vue"
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
    const
-      // Seed synchronously from the URL so the first render already knows
-      // `standalone`/`launch`/etc. — no `initializing` flash before the async run.
       state = ref<EhrStatus>(initialStatus()),
       handoff = shallowRef(null) as unknown as ShallowRef<EhrHandoff | null>,
       percent = ref(0),
       error = ref<EhrAuthError | null>(null),
-      // Seed from the shared launch: a late mount (after it already settled)
-      // starts done — no show→hide replay flash of the modal.
       loading = ref(!isSettled())
 
    let alive = true

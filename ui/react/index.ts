@@ -16,14 +16,10 @@ export { EhrLaunch } from "./EhrLaunch.js"
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
    const
-      // Seed synchronously from the URL so the first render already knows
-      // `standalone`/`launch`/etc. — no `initializing` flash before the async run.
       [state, setState] = useState<EhrStatus>(initialStatus),
       [handoff, setHandoff] = useState<EhrHandoff | null>(null),
       [percent, setPercent] = useState(0),
       [error, setError] = useState<EhrAuthError | null>(null),
-      // Seed from the shared launch: a late mount (already settled) starts
-      // done — no show→hide replay flash of the modal.
       [loading, setLoading] = useState(() => !isSettled()),
       opts = useRef(options)
 

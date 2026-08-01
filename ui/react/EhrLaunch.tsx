@@ -27,12 +27,10 @@ export const EhrLaunch = ({
 }: EhrLaunchBaseProps & { header?: any; label?: any; error?: any; expired?: any; children?: any }) => {
    const
       { state, handoff, percent, error, loading } = useEhrLaunch(options),
-      // Start hidden if the launch already settled (late mount) — avoids a flash.
       [showModal, setShowModal] = useState(() => loading),
       [expired, setExpired] = useState(false)
 
    useEffect(() => {
-      // On error keep the bar visible, stopped at its current percent.
       if (loading || error) return
       const id = setTimeout(() => setShowModal(false), completionDelayMs)
       return () => clearTimeout(id)

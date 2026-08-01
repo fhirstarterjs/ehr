@@ -46,9 +46,6 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
                   reject(err)
                }
             },
-            // A `load` with no callback message = provider rendered a terminal page
-            // (e.g. a 200 "OAuth2 Error") instead of redirecting back to us. Each
-            // load resets the timer so multi-hop redirects aren't tripped early.
             onLoad = (): void => (clearTimeout(stall), void (stall = setTimeout(() => (
                cleanup(),
                reject(Object.assign(
