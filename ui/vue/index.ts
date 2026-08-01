@@ -2,7 +2,7 @@
 
 import { ref, shallowRef, onMounted, onUnmounted } from "vue"
 import type { ShallowRef } from "vue"
-import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
 // EhrHandoff is an ambient global type from ../../types
 
 /** Vue progress component. */
@@ -18,7 +18,9 @@ export { default as EhrLaunch } from "./EhrLaunch.vue"
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
    const
-      state = ref<EhrStatus>("initializing"),
+      // Seed synchronously from the URL so the first render already knows
+      // `standalone`/`launch`/etc. — no `initializing` flash before the async run.
+      state = ref<EhrStatus>(initialStatus()),
       handoff = shallowRef(null) as unknown as ShallowRef<EhrHandoff | null>,
       percent = ref(0),
       error = ref<EhrAuthError | null>(null),

@@ -1,7 +1,7 @@
 /** React entry: the `useEhrLaunch` hook plus component re-exports. */
 
 import { useState, useEffect, useRef } from "react"
-import { fhirStarter, onStatus, onProgress } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
 
 /** React progress component. */
 export { ProgressBar } from "./ProgressBar.js"
@@ -16,7 +16,9 @@ export { EhrLaunch } from "./EhrLaunch.js"
  */
 export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => {
    const
-      [state, setState] = useState<EhrStatus>("initializing"),
+      // Seed synchronously from the URL so the first render already knows
+      // `standalone`/`launch`/etc. — no `initializing` flash before the async run.
+      [state, setState] = useState<EhrStatus>(initialStatus),
       [handoff, setHandoff] = useState<EhrHandoff | null>(null),
       [percent, setPercent] = useState(0),
       [error, setError] = useState<EhrAuthError | null>(null),

@@ -3,13 +3,14 @@
  * these names directly; no import is needed.
  */
 
-/** Launch-phase lifecycle status, derived from the URL on each page load. */
+/** Launch-phase lifecycle status, derived from the URL on each page load.
+    `standalone` means the page was opened outside any EHR launch (no `iss`). */
 type EhrStatus =
    | "initializing"
    | "authorizing"
    | "authorized"
    | "authenticated"
-   | "idle"
+   | "standalone"
    | "invalid"
    | "expired"
 

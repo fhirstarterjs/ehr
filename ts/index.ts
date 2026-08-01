@@ -2,12 +2,24 @@ import { onProgress, getProgress, trickle, stopProgress, resetProgress } from ".
 import { resolveClientId, mountIframe, forwardCallback } from "./iframe.js"
 import { classify, completeSession, rejectSession, restoreSession } from "./callback.js"
 import { onStatus, getStatus, setStatus, watchExpiry, resetStatus } from "./status.js"
-import { discover, buildAuthorizeUrl, savePreAuth } from "./discover.js"
+import { discover, buildAuthorizeUrl, savePreAuth, loadSession } from "./discover.js"
 import { verifier, challenge, usePkce } from "./pkce.js"
 import { stopRefresh } from "./refresh.js"
 
 /** Progress and status subscriptions plus their current snapshots. */
 export { onProgress, getProgress, onStatus, getStatus }
+
+/** The status derivable synchronously from the URL + saved session, before the
+    async run — so UIs pick the initial view with no `initializing` flash. */
+export const initialStatus = (): EhrStatus => {
+   if (typeof window === "undefined") return "initializing"
+   switch (classify(new URL(window.location.href).searchParams)) {
+      case "error": return "invalid"
+      case "callback": return "authorizing"
+      case "launch": return "initializing"
+      default: return loadSession() ? "authenticated" : "standalone"
+   }
+}
 
 /** Begin (or reuse) the one-shot SMART EHR launch for this page load. Idempotent. */
 export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | null> => {

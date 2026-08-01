@@ -64,7 +64,7 @@ export const restoreSession = async (
    const handoff = loadSession()
    if (handoff) return handoff
    stopProgress()
-   setStatus("idle")
+   setStatus("standalone")
    log("no existing session")
    return null
 }
