@@ -2,7 +2,7 @@
 
 import { ref, shallowRef, onMounted, onUnmounted } from "vue"
 import type { ShallowRef } from "vue"
-import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress, initialStatus, isSettled } from "../../ts/index.js"
 // EhrHandoff is an ambient global type from ../../types
 
 /** Vue auth-launch modal (progress track, status, header/footer slots). */
@@ -24,7 +24,9 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
       handoff = shallowRef(null) as unknown as ShallowRef<EhrHandoff | null>,
       percent = ref(0),
       error = ref<EhrAuthError | null>(null),
-      loading = ref(true)
+      // Seed from the shared launch: a late mount (after it already settled)
+      // starts done — no show→hide replay flash of the modal.
+      loading = ref(!isSettled())
 
    let alive = true
 

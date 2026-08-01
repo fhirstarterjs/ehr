@@ -1,7 +1,7 @@
 /** React entry: the `useEhrLaunch` hook plus component re-exports. */
 
 import { useState, useEffect, useRef } from "react"
-import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
+import { fhirStarter, onStatus, onProgress, initialStatus, isSettled } from "../../ts/index.js"
 
 /** React auth-launch modal (progress track, status, header/footer nodes). */
 export { LaunchModal } from "./LaunchModal.js"
@@ -22,7 +22,9 @@ export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
       [handoff, setHandoff] = useState<EhrHandoff | null>(null),
       [percent, setPercent] = useState(0),
       [error, setError] = useState<EhrAuthError | null>(null),
-      [loading, setLoading] = useState(true),
+      // Seed from the shared launch: a late mount (already settled) starts
+      // done — no show→hide replay flash of the modal.
+      [loading, setLoading] = useState(() => !isSettled()),
       opts = useRef(options)
 
    useEffect(() => {

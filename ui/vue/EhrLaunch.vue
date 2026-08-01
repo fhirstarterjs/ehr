@@ -1,6 +1,6 @@
 <template>
    <LaunchModal
-      v-if="showBar || error"
+      v-if="showModal || error"
       :percent="percent"
       :show-status="showStatus"
       :show-progress="showProgress"
@@ -48,14 +48,15 @@ const
       defineProps<{ options?: EhrLaunchOptions, completionDelayMs?: number, showStatus?: boolean, showProgress?: boolean, showPercentage?: boolean }>(),
       { options: () => ({}), completionDelayMs: 500, showStatus: true, showProgress: true, showPercentage: false }),
    { state, handoff, percent, error, loading } = useEhrLaunch(props.options),
-   showBar = ref(true),
+   // Start hidden if the launch already settled (late mount) — avoids a flash.
+   showModal = ref(loading.value),
    expired = ref(false),
    // Strip the internal `EhrLaunch:` prefix for display.
    message = computed(() => error.value?.message.replace(/^EhrLaunch:\s*/, "") ?? "")
 
 watch(loading, (isLoading) => {
    // On error keep the bar visible, stopped at its current percent.
-   if (!isLoading && !error.value) setTimeout(() => (showBar.value = false), props.completionDelayMs)
+   if (!isLoading && !error.value) setTimeout(() => (showModal.value = false), props.completionDelayMs)
 })
 
 watch(state, (next) => next === "expired" && (expired.value = true))

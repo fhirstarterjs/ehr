@@ -25,8 +25,11 @@ export const initialStatus = (): EhrStatus => {
 export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | null> => {
    if (started) return started
    options = opts, opts.onProgress && onProgress(opts.onProgress), opts.onStatus && onStatus(opts.onStatus)
-   return (started = run().then((h) => (h && watchExpiry(h), h)).catch(fail))
+   return (started = run().then((h) => (h && watchExpiry(h), h)).catch(fail).finally(() => (settled = true)))
 }
+
+/** True once the shared launch settled — lets late mounts skip the modal replay. */
+export const isSettled = (): boolean => settled
 
 /** Default SMART EHR-launch entrypoint. */
 export default fhirStarter
@@ -38,13 +41,13 @@ export const destroy = (): void => {
    removeFrame?.(), (removeFrame = null)
    resetStatus()
    resetProgress()
-   options = {}
-   started = null
+   options = {}, started = null, settled = false
 }
 
 let
    options: EhrLaunchOptions = {},
    started: Promise<EhrHandoff | null> | null = null,
+   settled = false,
    removeFrame: (() => void) | null = null
 
 const
