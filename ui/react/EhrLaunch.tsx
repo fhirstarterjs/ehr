@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useEhrLaunch } from "./index.js"
 import { ProgressBar } from "./ProgressBar.js"
-import "../../scss/progress.scss"
+import "../../scss/ehr-launch.scss"
 
 const EXPIRED_HINT =
    "Data shown may be out of date and unsafe to act on. Close this window and relaunch from the EHR to continue."

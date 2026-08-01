@@ -15,15 +15,6 @@ const config = {
    plugins: [
       vue(),
       react({ include: /\.(tsx|jsx)$/ }),
-      {
-         name: "retain-style-import",
-         generateBundle(_options, bundle) {
-            Object.values(bundle).forEach((output) => {
-               if (output.type === "chunk" && output.isEntry && ["vue", "react"].includes(output.name))
-                  output.code = `import "./style.css";\n${output.code}`
-            })
-         },
-      },
    ],
    build: {
       lib: {

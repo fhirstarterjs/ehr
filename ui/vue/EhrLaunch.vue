@@ -25,7 +25,6 @@
 import { ref, watch } from "vue"
 import { useEhrLaunch } from "./index.js"
 import ProgressBar from "./ProgressBar.vue"
-import "../../scss/progress.scss"
 
 const
    EXPIRED_HINT =
@@ -43,3 +42,5 @@ watch(loading, (isLoading) => {
 
 watch(state, (next) => next === "expired" && (expired.value = true))
 </script>
+
+<style src="../../scss/ehr-launch.scss" lang="scss"></style>
