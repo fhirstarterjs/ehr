@@ -26,10 +26,16 @@
       overflow: hidden;
       border-radius: 9999px;
       background: var(--fs-ehr-track, #d1d5db);
+      box-shadow: inset 0 1px 2px rgb(0 0 0 / 20%);
 
       .fs-ehr-fill {
          height: 100%;
-         background: var(--fs-ehr-fill, #7f1d1d);
+         background:
+            linear-gradient(180deg, rgb(255 255 255 / 35%) 0%, rgb(255 255 255 / 0%) 45%),
+            var(--fs-ehr-fill, #7f1d1d);
+         box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 25%),
+            inset 0 -2px 3px rgb(0 0 0 / 25%);
          transition: width 400ms ease;
 
          @media (prefers-reduced-motion: reduce) {
@@ -37,7 +43,6 @@
          }
       }
 
-      // Centered percentage readout.
       .fs-ehr-percent {
          position: absolute;
          inset: 0;
@@ -45,17 +50,20 @@
          align-items: center;
          justify-content: center;
          font-size: 0.7rem;
-         font-weight: 600;
-         color: var(--fs-ehr-text, #303030);
+         font-weight: 700;
+         color: var(--fs-ehr-percent-text, #fff);
+         text-shadow:
+            0 0 2px rgb(0 0 0 / 85%),
+            0 1px 1px rgb(0 0 0 / 70%);
       }
 
-      // `show-progress` off: keep the element (for the percentage) but make the
-      // track/fill invisible.
       &.fs-ehr-track--bare {
          background: transparent;
+         box-shadow: none;
 
          .fs-ehr-fill {
             background: transparent;
+            box-shadow: none;
          }
       }
    }
@@ -81,9 +89,6 @@
    }
 }
 
-// Debug-visible auth iframe (only when `showIframe`/`debug` is set). The hidden
-// frame is styled inline by the core, so this stylesheet is optional unless you
-// use the visible mode. Override freely via `.fs-ehr-frame.visible`.
 .fs-ehr-frame.visible {
    position: fixed;
    top: 50%;
@@ -98,7 +103,6 @@
    box-shadow: 0 20px 50px rgb(0 0 0 / 35%);
 }
 
-// Session-expired warning toast. Fixed to the bottom-right; persistent (not dismissible).
 .fs-ehr-expired {
    position: fixed;
    right: 0;
