@@ -25,22 +25,38 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
       frame = document.createElement("iframe"),
       visible = Boolean(opts.showIframe || opts.debug),
       callback = new Promise<URL>((resolve, reject) => {
-         const receive = (event: MessageEvent): void => {
-            if (event.source !== frame.contentWindow || event.origin !== window.location.origin)
-               return
-            if (event.data?.type !== CALLBACK_MESSAGE || typeof event.data.url !== "string") return
-            try {
-               const url = new URL(event.data.url)
-               if (url.origin !== window.location.origin)
-                  throw new Error("EhrLaunch: rejected cross-origin iframe callback")
-               window.removeEventListener("message", receive)
-               resolve(url)
-            } catch (err) {
-               window.removeEventListener("message", receive)
-               reject(err)
-            }
-         }
+         const
+            stallMs = opts.authorizeStallMs ?? 1_500,
+            cleanup = (): void => (
+               window.removeEventListener("message", receive),
+               frame.removeEventListener("load", onLoad),
+               clearTimeout(stall)),
+            receive = (event: MessageEvent): void => {
+               if (event.source !== frame.contentWindow || event.origin !== window.location.origin)
+                  return
+               if (event.data?.type !== CALLBACK_MESSAGE || typeof event.data.url !== "string") return
+               try {
+                  const url = new URL(event.data.url)
+                  if (url.origin !== window.location.origin)
+                     throw new Error("EhrLaunch: rejected cross-origin iframe callback")
+                  cleanup()
+                  resolve(url)
+               } catch (err) {
+                  cleanup()
+                  reject(err)
+               }
+            },
+            // A `load` with no callback message = provider rendered a terminal page
+            // (e.g. Epic's 200 "OAuth2 Error") instead of redirecting to us. Each
+            // load resets the timer so multi-hop redirects aren't tripped early.
+            onLoad = (): void => (clearTimeout(stall), void (stall = setTimeout(() => (
+               cleanup(),
+               reject(Object.assign(
+                  new Error("EhrLaunch: authorize endpoint returned without redirecting"),
+                  { name: "EhrAuthError", error: "authorize_no_redirect" }))), stallMs)))
+         let stall: ReturnType<typeof setTimeout>
          window.addEventListener("message", receive)
+         frame.addEventListener("load", onLoad)
       })
    frame.name = name
    frame.classList.add("fs-ehr-frame")
