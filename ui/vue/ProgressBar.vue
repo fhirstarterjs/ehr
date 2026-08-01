@@ -16,6 +16,7 @@
          <div v-if="showStatus" class="fs-ehr-label">
             <slot name="label">{{ label ?? "Loading…" }}</slot>
          </div>
+         <slot name="footer" />
       </div>
    </div>
 </template>

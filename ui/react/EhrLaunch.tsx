@@ -29,27 +29,30 @@ export const EhrLaunch = ({
       [expired, setExpired] = useState(false)
 
    useEffect(() => {
-      if (loading) return
+      // On error keep the bar visible, stopped at its current percent.
+      if (loading || error) return
       const id = setTimeout(() => setShowBar(false), completionDelayMs)
       return () => clearTimeout(id)
-   }, [loading, completionDelayMs])
+   }, [loading, error, completionDelayMs])
 
    useEffect(() => void (state === "expired" && setExpired(true)), [state])
 
    return (
       <>
-         {showBar ? (
+         {showBar || error ? (
             <ProgressBar
                percent={percent}
                header={header}
                showStatus={showStatus}
                label={label ?? state.charAt(0).toUpperCase() + state.slice(1)}
+               footer={error ? (
+                  <div className="fs-ehr-error">
+                     {errorRender ? errorRender(error) : `Error: ${error.message.replace(/^EhrLaunch:\s*/, "")}`}
+                  </div>
+               ) : null}
             />
          ) : null}
-         {error ? (
-            <div className="fs-ehr-error">{errorRender ? errorRender(error) : error.message}</div>
-         ) : null}
-         {handoff && !showBar ? children?.({ handoff, state, error }) : null}
+         {children?.({ handoff, state, error })}
          {expired ? (
             <div className="fs-ehr-expired">
                <div className="fs-ehr-expired__pill" role="alert" title={EXPIRED_HINT}>

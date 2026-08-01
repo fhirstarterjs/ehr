@@ -18,6 +18,7 @@ interface ReactProgressBarProps {
    label?: import("react").ReactNode
    showStatus?: boolean
    header?: import("react").ReactNode
+   footer?: import("react").ReactNode
    panelClass?: string
    fillClass?: string
 }
@@ -32,7 +33,7 @@ interface ReactEhrLaunchProps {
    error?: (error: EhrAuthError) => import("react").ReactNode
    expired?: import("react").ReactNode
    children?: (result: {
-      handoff: EhrHandoff
+      handoff: EhrHandoff | null
       state: EhrStatus
       error: EhrAuthError | null
    }) => import("react").ReactNode

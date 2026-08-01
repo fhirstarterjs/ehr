@@ -6,6 +6,7 @@ export const ProgressBar = ({
    label,
    showStatus = true,
    header,
+   footer,
    panelClass,
    fillClass,
 }: ReactProgressBarProps) => (
@@ -25,6 +26,7 @@ export const ProgressBar = ({
             />
          </div>
          {showStatus ? <div className="fs-ehr-label">{label ?? "Loading…"}</div> : null}
+         {footer}
       </div>
    </div>
 )
