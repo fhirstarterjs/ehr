@@ -53,7 +53,7 @@ interface EhrLaunchOptions {
    exchangeMs?: number
    /** Grace (ms) after the auth iframe loads a non-callback page before it's
        treated as a failed authorize (provider returned a 200 error/consent page
-       instead of redirecting). Default 1500. */
+       instead of redirecting). Default 2.5 seconds. */
    authorizeStallMs?: number
    /** Parent for the auth iframe (element or selector). Default `document.body`. */
    iframeParent?: HTMLElement | string

@@ -26,7 +26,7 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
       visible = Boolean(opts.showIframe || opts.debug),
       callback = new Promise<URL>((resolve, reject) => {
          const
-            stallMs = opts.authorizeStallMs ?? 1_500,
+            stallMs = opts.authorizeStallMs ?? 2_500,
             cleanup = (): void => (
                window.removeEventListener("message", receive),
                frame.removeEventListener("load", onLoad),
