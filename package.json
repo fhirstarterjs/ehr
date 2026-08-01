@@ -1,6 +1,6 @@
 {
    "name": "@fhirstarter/ehr",
-   "version": "1.0.3",
+   "version": "1.1.0",
    "description": "Thin, plug-and-play SMART on FHIR EHR-launch library with no runtime deps. Runs native SMART App Launch in the background with live progress and turnkey Vue/React components, then hands off a flat authorized result for any FHIR library.",
    "license": "Kopimi",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
@@ -58,7 +58,6 @@
       "dist/ui/vue/index.d.ts",
       "types/core.d.ts",
       "types/native.d.ts",
-      "types/react.d.ts",
       "types/assets.d.ts",
       "types/vue-shim.d.ts",
       "README.md",

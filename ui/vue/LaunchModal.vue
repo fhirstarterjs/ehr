@@ -25,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+// defineProps can't reference the ambient LaunchModalProps — inline mirror.
 withDefaults(
    defineProps<{
       percent: number

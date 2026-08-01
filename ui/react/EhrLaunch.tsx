@@ -24,7 +24,7 @@ export const EhrLaunch = ({
    error: errorRender,
    expired: expiredRender,
    children,
-}: ReactEhrLaunchProps) => {
+}: EhrLaunchBaseProps & { header?: any; label?: any; error?: any; expired?: any; children?: any }) => {
    const
       { state, handoff, percent, error, loading } = useEhrLaunch(options),
       [showBar, setShowBar] = useState(true),

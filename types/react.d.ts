@@ -4,11 +4,8 @@
  */
 
 /** Result returned by the React `useEhrLaunch` hook. */
-interface ReactEhrLaunch {
-   state: EhrStatus
-   handoff: EhrHandoff | null
+interface ReactEhrLaunch extends EhrLaunchResult {
    percent: number
-   error: EhrAuthError | null
    loading: boolean
 }
 
@@ -26,19 +23,10 @@ interface ReactLaunchModalProps {
 }
 
 /** Props for the turnkey React `EhrLaunch` component. */
-interface ReactEhrLaunchProps {
-   options?: EhrLaunchOptions
-   completionDelayMs?: number
+interface ReactEhrLaunchProps extends EhrLaunchBaseProps {
    header?: import("react").ReactNode
    label?: import("react").ReactNode
-   showStatus?: boolean
-   showProgress?: boolean
-   showPercentage?: boolean
    error?: (error: EhrAuthError) => import("react").ReactNode
    expired?: import("react").ReactNode
-   children?: (result: {
-      handoff: EhrHandoff | null
-      state: EhrStatus
-      error: EhrAuthError | null
-   }) => import("react").ReactNode
+   children?: (result: EhrLaunchResult) => import("react").ReactNode
 }

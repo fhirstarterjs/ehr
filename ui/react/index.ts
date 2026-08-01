@@ -14,7 +14,7 @@ export { EhrLaunch } from "./EhrLaunch.js"
  * `{ state, handoff, percent, error, loading }`. Guards post-unmount updates and
  * reuses the same core promise across Strict Mode's setup-cleanup-setup cycle.
  */
-export const useEhrLaunch = (options: EhrLaunchOptions = {}): ReactEhrLaunch => {
+export const useEhrLaunch = (options: EhrLaunchOptions = {}) => {
    const
       // Seed synchronously from the URL so the first render already knows
       // `standalone`/`launch`/etc. — no `initializing` flash before the async run.

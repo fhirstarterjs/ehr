@@ -74,3 +74,32 @@ type StatusListener = (status: EhrStatus) => void
 
 /** Unsubscribe function returned by subscription calls. */
 type Unsubscribe = () => void
+
+/** Launch result exposed to a consumer's content (Vue slot props / React
+    render-prop args). Framework-agnostic; reused by both wrappers. */
+interface EhrLaunchResult {
+   handoff: EhrHandoff | null
+   state: EhrStatus
+   error: EhrAuthError | null
+}
+
+/** Scalar props common to both framework `EhrLaunch` components; framework-
+    specific slot/render-prop typing is layered on top per wrapper. */
+interface EhrLaunchBaseProps {
+   options?: EhrLaunchOptions
+   completionDelayMs?: number
+   showStatus?: boolean
+   showProgress?: boolean
+   showPercentage?: boolean
+}
+
+/** Props for the shared `LaunchModal` (Vue + React). */
+interface LaunchModalProps {
+   percent: number
+   label?: string
+   showStatus?: boolean
+   showProgress?: boolean
+   showPercentage?: boolean
+   panelClass?: string
+   fillClass?: string
+}
