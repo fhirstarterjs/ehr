@@ -26,6 +26,14 @@ import { ref, watch } from "vue"
 import { useEhrLaunch } from "./index.js"
 import ProgressBar from "./ProgressBar.vue"
 
+defineSlots<{
+   default(props: { handoff: EhrHandoff, state: EhrStatus, error: EhrAuthError | null }): unknown
+   header(): unknown
+   label(props: { state: EhrStatus }): unknown
+   error(props: { error: EhrAuthError }): unknown
+   expired(): unknown
+}>()
+
 const
    EXPIRED_HINT =
       "Data shown may be out of date and unsafe to act on. Close this window and relaunch from the EHR to continue.",
