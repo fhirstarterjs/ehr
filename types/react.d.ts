@@ -12,11 +12,13 @@ interface ReactEhrLaunch {
    loading: boolean
 }
 
-/** Props for the React `ProgressBar` component. */
-interface ReactProgressBarProps {
+/** Props for the React `LaunchModal` component. */
+interface ReactLaunchModalProps {
    percent: number
    label?: import("react").ReactNode
    showStatus?: boolean
+   showProgress?: boolean
+   showPercentage?: boolean
    header?: import("react").ReactNode
    footer?: import("react").ReactNode
    panelClass?: string
@@ -30,6 +32,8 @@ interface ReactEhrLaunchProps {
    header?: import("react").ReactNode
    label?: import("react").ReactNode
    showStatus?: boolean
+   showProgress?: boolean
+   showPercentage?: boolean
    error?: (error: EhrAuthError) => import("react").ReactNode
    expired?: import("react").ReactNode
    children?: (result: {

@@ -1,7 +1,7 @@
-/** React progress bar mirroring the Vue component's markup and ARIA semantics. */
+/** React auth-launch modal mirroring the Vue component's markup and ARIA semantics. */
 
 /** Overlay modal with a progress track/fill, optional header and label nodes. */
-export const ProgressBar = ({
+export const LaunchModal = ({
    percent,
    label,
    showStatus = true,
@@ -11,7 +11,7 @@ export const ProgressBar = ({
    footer,
    panelClass,
    fillClass,
-}: ReactProgressBarProps) => (
+}: ReactLaunchModalProps) => (
    <div className="fs-ehr-overlay">
       <div className={`fs-ehr-panel${panelClass ? ` ${panelClass}` : ""}`}>
          {header ? <div className="fs-ehr-header">{header}</div> : null}

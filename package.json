@@ -53,7 +53,7 @@
       "dist/ts/progress.d.ts",
       "dist/ts/status.d.ts",
       "dist/ui/react/index.d.ts",
-      "dist/ui/react/ProgressBar.d.ts",
+      "dist/ui/react/LaunchModal.d.ts",
       "dist/ui/react/EhrLaunch.d.ts",
       "dist/ui/vue/index.d.ts",
       "types/core.d.ts",

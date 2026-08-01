@@ -278,7 +278,7 @@ const { state, handoff: auth, percent, error, loading } = useEhrLaunch()
 ### Styling
 
 The components load the default theme automatically; if you use the headless
-`ProgressBar` or composable directly, import `@fhirstarter/ehr/style.css`
+`LaunchModal` or composable directly, import `@fhirstarter/ehr/style.css`
 yourself.
 
 Restyle via the stable `fs-ehr-*` classes and CSS variables

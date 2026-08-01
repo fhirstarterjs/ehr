@@ -5,8 +5,8 @@ import type { ShallowRef } from "vue"
 import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
 // EhrHandoff is an ambient global type from ../../types
 
-/** Vue progress component. */
-export { default as ProgressBar } from "./ProgressBar.vue"
+/** Vue auth-launch modal (progress track, status, header/footer slots). */
+export { default as LaunchModal } from "./LaunchModal.vue"
 
 /** Turnkey Vue EHR-launch component. */
 export { default as EhrLaunch } from "./EhrLaunch.vue"

@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { fhirStarter, onStatus, onProgress, initialStatus } from "../../ts/index.js"
 
-/** React progress component. */
-export { ProgressBar } from "./ProgressBar.js"
+/** React auth-launch modal (progress track, status, header/footer nodes). */
+export { LaunchModal } from "./LaunchModal.js"
 
 /** Turnkey React EHR-launch component. */
 export { EhrLaunch } from "./EhrLaunch.js"

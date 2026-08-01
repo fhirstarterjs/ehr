@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useEhrLaunch } from "./index.js"
-import { ProgressBar } from "./ProgressBar.js"
+import { LaunchModal } from "./LaunchModal.js"
 import "../../scss/ehr-launch.scss"
 
 const EXPIRED_HINT =
@@ -19,6 +19,8 @@ export const EhrLaunch = ({
    header,
    label,
    showStatus = true,
+   showProgress = true,
+   showPercentage = false,
    error: errorRender,
    expired: expiredRender,
    children,
@@ -40,10 +42,12 @@ export const EhrLaunch = ({
    return (
       <>
          {showBar || error ? (
-            <ProgressBar
+            <LaunchModal
                percent={percent}
                header={header}
                showStatus={showStatus}
+               showProgress={showProgress}
+               showPercentage={showPercentage}
                label={label ?? state.charAt(0).toUpperCase() + state.slice(1)}
                footer={error ? (
                   <div className="fs-ehr-error">

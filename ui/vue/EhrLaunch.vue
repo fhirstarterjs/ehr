@@ -1,5 +1,11 @@
 <template>
-   <ProgressBar v-if="showBar || error" :percent="percent" :show-status="showStatus">
+   <LaunchModal
+      v-if="showBar || error"
+      :percent="percent"
+      :show-status="showStatus"
+      :show-progress="showProgress"
+      :show-percentage="showPercentage"
+   >
       <template v-if="$slots.header" #header><slot name="header" /></template>
       <template #label>
          <slot name="label" :state="state">
@@ -11,7 +17,7 @@
             <slot name="error" :error="error">Error: {{ message }}</slot>
          </div>
       </template>
-   </ProgressBar>
+   </LaunchModal>
 
    <slot :handoff="handoff" :state="state" :error="error" />
 
@@ -25,7 +31,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { useEhrLaunch } from "./index.js"
-import ProgressBar from "./ProgressBar.vue"
+import LaunchModal from "./LaunchModal.vue"
 
 defineSlots<{
    default(props: { handoff: EhrHandoff | null, state: EhrStatus, error: EhrAuthError | null }): unknown
@@ -39,8 +45,8 @@ const
    EXPIRED_HINT =
       "Data shown may be out of date and unsafe to act on. Close this window and relaunch from the EHR to continue.",
    props = withDefaults(
-      defineProps<{ options?: EhrLaunchOptions, completionDelayMs?: number, showStatus?: boolean }>(),
-      { options: () => ({}), completionDelayMs: 500, showStatus: true }),
+      defineProps<{ options?: EhrLaunchOptions, completionDelayMs?: number, showStatus?: boolean, showProgress?: boolean, showPercentage?: boolean }>(),
+      { options: () => ({}), completionDelayMs: 500, showStatus: true, showProgress: true, showPercentage: false }),
    { state, handoff, percent, error, loading } = useEhrLaunch(props.options),
    showBar = ref(true),
    expired = ref(false),

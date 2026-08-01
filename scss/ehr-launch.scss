@@ -21,6 +21,7 @@
    }
 
    .fs-ehr-track {
+      position: relative;
       height: 1rem;
       overflow: hidden;
       border-radius: 9999px;
@@ -33,6 +34,28 @@
 
          @media (prefers-reduced-motion: reduce) {
             transition: none;
+         }
+      }
+
+      // Centered percentage readout.
+      .fs-ehr-percent {
+         position: absolute;
+         inset: 0;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-size: 0.7rem;
+         font-weight: 600;
+         color: var(--fs-ehr-text, #303030);
+      }
+
+      // `show-progress` off: keep the element (for the percentage) but make the
+      // track/fill invisible.
+      &.fs-ehr-track--bare {
+         background: transparent;
+
+         .fs-ehr-fill {
+            background: transparent;
          }
       }
    }
