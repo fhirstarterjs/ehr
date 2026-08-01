@@ -1,8 +1,3 @@
-/**
- * Public ambient types for the native SMART App Launch handoff. Source files reference
- * these names directly; no import. Internal flow types live in native.internal.d.ts.
- */
-
 /** PKCE policy: require S256 (default), use if advertised, or disable entirely. */
 type PkceMode = "required" | "ifSupported" | "disabled"
 
@@ -28,18 +23,32 @@ interface EhrFhirClientState {
  * SMART launch context and own vendor token fields; reserved keys are never clobbered.
  */
 interface EhrHandoff {
+   /** FHIR base (resource server) URL to issue API calls against. */
    serverUrl: string
+   /** Current bearer access token, or undefined before/without one. */
    accessToken: string | undefined
+   /** Access-token expiry as epoch milliseconds. */
    expiresAt: number
+   /** Adapter-shaped state for seeding `fhir-kit-client`/`fhirclient`. */
    readonly fhirClient: EhrFhirClientState
+   /** Ready-to-spread request headers carrying the bearer token. */
    readonly authHeaders: Record<string, string>
+   /** Granted scopes (space-delimited), if the server returned them. */
    scope?: string
+   /** Token type from the token response (typically `Bearer`). */
    tokenType?: string
+   /** Launch patient context id, when present. */
    patient?: string
+   /** Launch encounter context id, when present. */
    encounter?: string
+   /** Raw OpenID Connect id_token, when `openid` was granted. */
    idToken?: string
+   /** SMART flag: host expects the app to show its own patient banner. */
    needPatientBanner?: boolean
+   /** SMART style URL for matching the host EHR's look and feel. */
    smartStyleUrl?: string
+   /** Extra token-response params passed through from the server. */
    params?: Record<string, unknown>
+   /** Passthrough for any additional vendor token fields. */
    [key: string]: unknown
 }

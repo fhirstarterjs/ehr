@@ -1,8 +1,3 @@
-/**
- * Internal ambient types for the native SMART App Launch flow. Used only by source
- * files during the build; never published, so they cannot leak into consumers.
- */
-
 /** Discovered SMART authorize/token endpoints (+ advertised PKCE methods). */
 interface SmartConfig {
    authorizeUrl: string

@@ -1,7 +1,12 @@
-/**
- * Ambient public types for the framework-agnostic core. Source files reference
- * these names directly; no import is needed.
- */
+/** Ambient declaration for side-effect SCSS imports in components. */
+declare module "*.scss"
+
+/** Allow importing single-file components as typed Vue modules. */
+declare module "*.vue" {
+   const component: import("vue").DefineComponent<Record<string, unknown>, unknown, unknown>
+   export default component
+}
+
 
 /** Launch-phase lifecycle status, derived from the URL on each page load.
     `standalone` means the page was opened outside any EHR launch (no `iss`). */
