@@ -1,6 +1,6 @@
 {
    "name": "@fhirstarter/ehr",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "description": "Thin, plug-and-play SMART on FHIR EHR-launch library with no runtime deps. Runs native SMART App Launch in the background with live progress and turnkey Vue/React components, then hands off a flat authorized result for any FHIR library.",
    "license": "Kopimi",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
@@ -66,7 +66,7 @@
    ],
    "scripts": {
       "check": "tsc --noEmit",
-      "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && tsc && node scripts/link-types.mjs",
+      "build": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\" && vite build && node scripts/inline-css.mjs && tsc && node scripts/link-types.mjs",
       "prepare": "npm run build",
       "prepack": "npm run build"
    },
