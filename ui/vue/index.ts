@@ -5,6 +5,10 @@ import type { ShallowRef } from "vue"
 import { fhirStarter, onStatus, onProgress, initialStatus, isSettled } from "../../ts/index.js"
 // EhrHandoff is an ambient global type from ../../types
 
+/** Early callback-iframe guards — call before app boot to skip rendering inside
+    the auth iframe. */
+export { isCallbackFrame, forwardIfCallback } from "../../ts/index.js"
+
 /** Vue auth-launch modal (progress track, status, header/footer slots). */
 export { default as LaunchModal } from "./LaunchModal.vue"
 

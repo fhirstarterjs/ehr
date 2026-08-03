@@ -22,6 +22,21 @@ export const initialStatus = (): EhrStatus => {
    }
 }
 
+/** True only when this window is the fhirStarter-spawned auth iframe on the
+    callback. Keyed on the `fhirstarter-` frame name so a host app itself iframed
+    (e.g. Epic Hyperspace) completes the session instead of forwarding. */
+export const isCallbackFrame = (): boolean => {
+   if (typeof window === "undefined" || window.parent === window) return false
+   if (!/^fhirstarter-/.test(window.name)) return false
+   const phase = classify(new URL(window.location.href).searchParams)
+   return phase === "callback" || phase === "error"
+}
+
+/** In the callback iframe, forward the code to the parent and return true so the
+    caller can skip booting the app. No-op (false) otherwise. */
+export const forwardIfCallback = (): boolean =>
+   isCallbackFrame() ? (void forwardCallback(), true) : false
+
 /** Begin (or reuse) the one-shot SMART EHR launch for this page load. Idempotent. */
 export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | null> => {
    opts.debug && setDebug(true)
@@ -138,15 +153,16 @@ const
       const
          search = new URL(window.location.href).searchParams,
          phase = classify(search)
-      log("run ENTER", { phase, href: window.location.href })
+      log("run ENTER", { phase, authFrame: isCallbackFrame(), href: window.location.href })
       switch (phase) {
          case "error":
-            return window.parent !== window && options.iframe !== false
-               ? (log("run: error in child frame → forwardCallback to parent"), forwardCallback())
+            return isCallbackFrame()
+               ? (log("run: error in auth-frame → forwardCallback to parent"), forwardCallback())
                : (log("run: error → fail"), fail(rejectSession(search)))
          case "callback":
-            return window.parent !== window && options.iframe !== false
-               ? (log("run: callback in child frame → forwardCallback (postMessage to parent)"), forwardCallback())
+            // Only the auth iframe forwards; an iframed host app completes here.
+            return isCallbackFrame()
+               ? (log("run: callback in auth-frame → forwardCallback (postMessage to parent)"), forwardCallback())
                : (log("run: callback → completeSession"), completeSession(search, options, setStatus))
          case "launch":
             return (log("run: launch → authorize()"), authorize(search))
@@ -158,3 +174,5 @@ const
          }
       }
    }
+
+forwardIfCallback()
