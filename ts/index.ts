@@ -26,6 +26,7 @@ export const initialStatus = (): EhrStatus => {
 export const fhirStarter = (opts: EhrLaunchOptions = {}): Promise<EhrHandoff | null> => {
    opts.debug && setDebug(true)
    log("fhirStarter() called", { reused: Boolean(started), href: location.href })
+   installNavTracer()
    if (started) return started
    options = opts, opts.onProgress && onProgress(opts.onProgress), opts.onStatus && onStatus(opts.onStatus)
    return (started = run().then((h) => (h && watchExpiry(h), h)).catch(fail).finally(() => (settled = true)))
@@ -54,6 +55,23 @@ let
    removeFrame: (() => void) | null = null
 
 const
+   /** Traces every URL change (debug only) so a stack trace names whoever
+       navigates. Idempotent. */
+   installNavTracer = (): void => {
+      const w = window as unknown as { __fsNavTraced?: boolean }
+      if (w.__fsNavTraced) return
+      w.__fsNavTraced = true
+      const
+         nav = (how: string, to?: string) => log(`NAV ${how}`, { to: to ?? "-", stack: new Error().stack }),
+         hp = history.pushState.bind(history),
+         hr = history.replaceState.bind(history)
+      history.pushState = (s, t, u) => (nav("pushState", String(u)), hp(s, t, u ?? null))
+      history.replaceState = (s, t, u) => (nav("replaceState", String(u)), hr(s, t, u ?? null))
+      window.addEventListener("beforeunload", () => nav("beforeunload → UNLOAD", location.href))
+      window.addEventListener("popstate", () => nav("popstate", location.href))
+      window.addEventListener("hashchange", () => nav("hashchange", location.href))
+   },
+
    scopeString = (): string => {
       const
          raw = options.scopes ?? [],
