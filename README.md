@@ -71,7 +71,9 @@ subscribe functions if you prefer.
 ## Modes
 
 - `iframe: true` (default): a hidden iframe authorizes and hands its callback
-  URL to the parent, which exchanges the code without navigating.
+  URL to the parent, which exchanges the code without navigating. Works even
+  when your app is itself iframed (e.g. inside Epic Hyperspace) — forwarding is
+  automatic on import, with no per-app wiring.
 - `iframe: false`: a full top-level redirect to the auth server and back, for
   hosts or EHRs that forbid framing.
 
@@ -85,7 +87,7 @@ subscribe functions if you prefer.
 | `pkce` | `"required"` (default), `"ifSupported"`, or `"disabled"`. See below. |
 | `redirectUri` | Defaults to the current window origin. |
 | `iframe` | `false` for the redirect flow. Default `true`. |
-| `debug` / `showIframe` | Console diagnostics / make the auth iframe visible. |
+| `debug` / `showIframe` | Frame-aware diagnostics (also toggled by `?debug` in the URL) / make the auth iframe visible. |
 | `authorizeMs` / `exchangeMs` | Progress pacing hints. |
 | `iframeParent` / `iframeClass` / `iframeStyle` | Auth iframe placement/styling. |
 | `params` | Extra authorization request parameters. Reserved OAuth/SMART keys are ignored. |
