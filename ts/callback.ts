@@ -2,6 +2,7 @@ import { setProgress, trickle, stopProgress } from "./progress.js"
 import { takePreAuth, saveSession, loadSession } from "./discover.js"
 import { exchange, toHandoff } from "./token.js"
 import { startRefresh } from "./refresh.js"
+import { log } from "./log.js"
 
 /** Launch-flow phase inferred purely from the current URL's query params. */
 export const classify = (search: URLSearchParams): "launch" | "callback" | "error" | "none" => {
@@ -45,12 +46,14 @@ export const completeSession = async (
    setStatus("authorized")
    setProgress(50)
    trickle(50, 95, options.exchangeMs ?? 3_000)
+   log("completeSession → exchanging code for token", { href: window.location.href })
    const
       res = await exchange(search, pre),
       handoff = toHandoff(res, pre.serverUrl, pre.params)
    saveSession(handoff)
    startRefresh({ handoff, tokenUrl: pre.tokenUrl, clientId: pre.clientId }, res.refresh_token)
    stripCallbackParams()
+   log("completeSession → done", { after: window.location.href })
    setProgress(100)
    setStatus("authenticated")
    return handoff
@@ -59,7 +62,6 @@ export const completeSession = async (
 /** Restore a persisted (unexpired) session snapshot, or null when none exists. */
 export const restoreSession = async (
    setStatus: (status: EhrStatus) => void,
-   log: (message: string, detail?: unknown) => void,
 ): Promise<EhrHandoff | null> => {
    const handoff = loadSession()
    if (handoff) return handoff

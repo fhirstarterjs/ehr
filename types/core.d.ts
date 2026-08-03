@@ -43,7 +43,7 @@ interface EhrLaunchOptions {
    redirectUri?: string
    /** `false` uses a full top-level redirect instead of the hidden iframe. */
    iframe?: boolean
-   /** Enable `console.info` diagnostics. */
+   /** Enable frame-aware diagnostic logging (also enabled by `?debug` in the URL). */
    debug?: boolean
    /** Show the auth iframe (debugging framed EHRs). */
    showIframe?: boolean

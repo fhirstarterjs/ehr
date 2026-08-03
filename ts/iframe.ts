@@ -1,5 +1,9 @@
+import { log } from "./log.js"
+
 /** Send this iframe's callback URL to its same-origin parent without navigating it. */
 export const forwardCallback = (): Promise<never> => {
+   log("forwardCallback → posting callback to parent",
+      { toOrigin: window.location.origin, myHref: window.location.href, parentIsTop: window.parent === window.top })
    window.parent.postMessage(
       { type: CALLBACK_MESSAGE, url: window.location.href },
       window.location.origin,
@@ -19,7 +23,7 @@ export const resolveClientId = async (
 }
 
 /** Mount a named auth iframe and return `{ navigate, callback, remove }`. */
-export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown) => void) => {
+export const mountIframe = (opts: EhrLaunchOptions) => {
    const
       name = `fhirstarter-${Math.random().toString(36).slice(2, 8)}`,
       frame = document.createElement("iframe"),
@@ -32,6 +36,13 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
                frame.removeEventListener("load", onLoad),
                clearTimeout(stall)),
             receive = (event: MessageEvent): void => {
+               // Log every inbound message so a filtered-out child postMessage
+               // (source/origin mismatch — the classic silent nested-iframe
+               // failure) is visible in debug mode.
+               event.data?.type === CALLBACK_MESSAGE && log("mountIframe.receive message", {
+                  fromExpectedFrame: event.source === frame.contentWindow,
+                  origin: event.origin, myOrigin: window.location.origin,
+                  originMatches: event.origin === window.location.origin, url: event.data?.url })
                if (event.source !== frame.contentWindow || event.origin !== window.location.origin)
                   return
                if (event.data?.type !== CALLBACK_MESSAGE || typeof event.data.url !== "string") return
@@ -39,6 +50,7 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
                   const url = new URL(event.data.url)
                   if (url.origin !== window.location.origin)
                      throw new Error("EhrLaunch: rejected cross-origin iframe callback")
+                  log("mountIframe.receive ACCEPTED callback → resolving", url.href)
                   cleanup()
                   resolve(url)
                } catch (err) {
@@ -46,11 +58,14 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
                   reject(err)
                }
             },
-            onLoad = (): void => (clearTimeout(stall), void (stall = setTimeout(() => (
-               cleanup(),
-               reject(Object.assign(
-                  new Error("EhrLaunch: authorize endpoint returned without redirecting"),
-                  { name: "EhrAuthError", error: "authorize_no_redirect" }))), stallMs)))
+            onLoad = (): void => (
+               log(`mountIframe.onLoad → child loaded; starting ${stallMs}ms no-redirect stall`),
+               clearTimeout(stall), void (stall = setTimeout(() => (
+                  log("mountIframe.stall → child did NOT redirect → authorize_no_redirect"),
+                  cleanup(),
+                  reject(Object.assign(
+                     new Error("EhrLaunch: authorize endpoint returned without redirecting"),
+                     { name: "EhrAuthError", error: "authorize_no_redirect" }))), stallMs)))
          let stall: ReturnType<typeof setTimeout>
          window.addEventListener("message", receive)
          frame.addEventListener("load", onLoad)
@@ -67,9 +82,9 @@ export const mountIframe = (opts: EhrLaunchOptions, log: (m: string, d?: unknown
    toParent(opts.iframeParent).appendChild(frame)
    log("iframe created", name)
    return {
-      remove: (): void => frame.remove(),
+      remove: (): void => (log("removing child iframe", name), frame.remove()),
       callback,
-      navigate: (url: string): void => void (frame.src = url),
+      navigate: (url: string): void => (log("navigating child iframe →", url), void (frame.src = url)),
    }
 }
 
