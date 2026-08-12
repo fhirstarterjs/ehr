@@ -1,10 +1,32 @@
-import { decodeJwt } from "./jwt.js"
+import { fhirUserOf } from "./jwt.js"
 
 const
+   /**
+    * Every SMART token-response field this library lifts onto the handoff, mapped
+    * from its wire name to the camelCase property. Driving both the assignment and
+    * the reserved-key set from ONE table is what keeps the surface uniform: each
+    * field appears exactly once, in camelCase, and stays writable.
+    */
+   KNOWN: Record<string, keyof EhrHandoff> = {
+      scope: "scope",
+      token_type: "tokenType",
+      patient: "patient",
+      encounter: "encounter",
+      id_token: "idToken",
+      need_patient_banner: "needPatientBanner",
+      smart_style_url: "smartStyleUrl",
+      fhirContext: "fhirContext",
+      intent: "intent",
+      tenant: "tenant",
+   },
+
+   // Own fields plus every mapped name, so `flatten` can never shadow a known
+   // property with its raw wire twin (which is how `need_patient_banner` and
+   // `smart_style_url` used to appear on the handoff twice).
    RESERVED = new Set([
       "serverUrl", "accessToken", "expiresAt", "params", "fhirClient", "authHeaders",
-      "scope", "tokenType", "patient", "encounter", "idToken", "needPatientBanner", "smartStyleUrl",
       "clientId", "fhirUser",
+      ...Object.keys(KNOWN), ...Object.values(KNOWN),
    ]),
 
    UNSAFE = new Set(["__proto__", "prototype", "constructor"]),
@@ -31,16 +53,6 @@ const
          if (UNSAFE.has(key) || PRIVATE.has(key) || RESERVED.has(key)) continue
          define(handoff, key, res[key])
       }
-   },
-
-   // Epic and friends return the launching practitioner as an OIDC `fhirUser`
-   // claim (an absolute or relative FHIR reference); some servers use `profile`.
-   fhirUserOf = (res: SmartTokenResponse): string | undefined => {
-      if (typeof res.fhirUser === "string") return res.fhirUser
-      const claims = res.id_token ? decodeJwt(res.id_token) : null
-      for (const key of ["fhirUser", "profile"])
-         if (typeof claims?.[key] === "string") return claims[key]
-      return undefined
    }
 
 /** Restore the non-persisted live adapters on a handoff object. */
@@ -58,18 +70,17 @@ export const hydrateHandoff = (handoff: EhrHandoff): EhrHandoff => {
    return handoff
 }
 
-/** Merge a token response into a handoff in place: present fields replace, omitted survive. */
+/**
+ * Merge a token response into a handoff in place: present fields replace, omitted
+ * survive. Refresh responses carry no launch context, so leaving omitted fields
+ * alone is what keeps `patient`, `intent`, `tenant` and friends alive across a
+ * token refresh.
+ */
 export const applyToken = (handoff: EhrHandoff, res: SmartTokenResponse): EhrHandoff => {
    handoff.accessToken = res.access_token
    handoff.expiresAt = Date.now() + (res.expires_in ?? 0) * 1_000
    const set = (k: keyof EhrHandoff, v: unknown): void => void (v !== undefined && ((handoff[k] as unknown) = v))
-   set("scope", res.scope)
-   set("tokenType", res.token_type)
-   set("patient", res.patient)
-   set("encounter", res.encounter)
-   set("idToken", res.id_token)
-   set("needPatientBanner", res.need_patient_banner)
-   set("smartStyleUrl", res.smart_style_url)
+   for (const [wire, key] of Object.entries(KNOWN)) set(key, res[wire])
    set("fhirUser", fhirUserOf(res))
    flatten(handoff, res)
    return handoff

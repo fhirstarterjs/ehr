@@ -19,6 +19,19 @@ interface EhrFhirClientState {
 }
 
 /**
+ * One `fhirContext` entry. At least one of `reference`, `canonical` or
+ * `identifier` is present; the rest are optional, and servers may add their own.
+ */
+interface EhrFhirContext {
+   reference?: string
+   canonical?: string
+   identifier?: Record<string, unknown>
+   type?: string
+   role?: string
+   [key: string]: unknown
+}
+
+/**
  * Flat living handoff returned by `fhirStarter()`. Core auth fields plus available
  * SMART launch context and own vendor token fields; reserved keys are never clobbered.
  */
@@ -51,6 +64,12 @@ interface EhrHandoff {
    needPatientBanner?: boolean
    /** SMART style URL for matching the host EHR's look and feel. */
    smartStyleUrl?: string
+   /** Launch context for resource types other than Patient/Encounter. */
+   fhirContext?: EhrFhirContext[]
+   /** Host's hint about which of the app's UI contexts to open. */
+   intent?: string
+   /** Opaque identifier for the launching healthcare organization. */
+   tenant?: string
    /** Extra token-response params passed through from the server. */
    params?: Record<string, unknown>
    /** Passthrough for any additional vendor token fields. */

@@ -65,5 +65,8 @@ interface SmartTokenResponse {
    refresh_token?: string
    need_patient_banner?: boolean
    smart_style_url?: string
+   fhirContext?: EhrFhirContext[]
+   intent?: string
+   tenant?: string
    [key: string]: unknown
 }

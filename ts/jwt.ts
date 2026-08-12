@@ -16,3 +16,16 @@ export const decodeJwt = (jwt: string): Record<string, unknown> | null => {
       return null
    }
 }
+
+/**
+ * The launching user as a FHIR reference. Servers may return it as a top-level
+ * token field, but per SMART it normally rides in the `id_token` as the `fhirUser`
+ * claim (some servers use OIDC's `profile` instead).
+ */
+export const fhirUserOf = (res: SmartTokenResponse): string | undefined => {
+   if (typeof res.fhirUser === "string") return res.fhirUser
+   const claims = res.id_token ? decodeJwt(res.id_token) : null
+   for (const key of ["fhirUser", "profile"])
+      if (typeof claims?.[key] === "string") return claims[key]
+   return undefined
+}

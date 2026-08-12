@@ -62,9 +62,9 @@ if (auth) {
 By default no options are required. The client id is decoded from the `launch`
 token passed by the EHR. `fhirStarter()` resolves to a flat `auth` object (or
 `null` when there is no launch context) whose fields you read directly:
-`serverUrl`, `accessToken`, `expiresAt`, and launch context like `patient`,
-`encounter`, `scope`, and `idToken`. Hand it off to any FHIR library or plain
-`fetch` (see [Bring your own client](#bring-your-own-client)). `fhirStarter` is
+`serverUrl`, `accessToken`, `expiresAt`, `clientId`, and launch context like
+`patient`, `encounter`, `scope`, and `idToken`. Hand it off to any FHIR library
+or plain `fetch` (see [Bring your own client](#bring-your-own-client)). `fhirStarter` is
 also the default export, and `onProgress`/`onStatus` are exported as standalone
 subscribe functions if you prefer.
 
@@ -83,7 +83,7 @@ subscribe functions if you prefer.
 | --- | --- |
 | `clientId` | Static client id. Optional; derived from the launch token by default. |
 | `resolveClientId` | Async `(ctx) => id` resolver, given `{ iss, launch }`, for per-launch schemes. |
-| `scopes` | Scope string or array (SMART v1 or v2). |
+| `scopes` | Scope string or array (SMART v1 or v2). `launch` is always included. Add `openid fhirUser` to populate `auth.fhirUser`. |
 | `pkce` | `"required"` (default), `"ifSupported"`, or `"disabled"`. See below. |
 | `redirectUri` | Defaults to the current window origin. |
 | `iframe` | `false` for the redirect flow. Default `true`. |
@@ -153,7 +153,7 @@ if (auth) {
 
 Still using [`fhirclient`](https://www.npmjs.com/package/fhirclient)? The
 `auth.fhirClient` field is a ready-to-spread `FHIR.client(...)` argument that
-carries the live token plus launch context (`patient`, `encounter`, `fhirUser`):
+carries the live token plus launch context (`patient`, `encounter`, `id_token`):
 
 ```ts
 import FHIR from "fhirclient"
@@ -166,10 +166,15 @@ if (auth) {
 }
 ```
 
-Result fields: `serverUrl`, `accessToken`, `expiresAt` (epoch ms), plus launch
-context such as `patient`, `encounter`, `scope`, `tokenType`, `idToken`,
-`needPatientBanner`, and `smartStyleUrl` when the EHR provides them. `authHeaders`
-is `{ Authorization }` when authed or `{}` otherwise; `fhirClient` spreads into
+Result fields: `serverUrl`, `accessToken`, `expiresAt` (epoch ms), `clientId`
+(the id this session authorized with), plus launch context such as `patient`,
+`encounter`, `scope`, `tokenType`, `idToken`, `needPatientBanner`,
+`smartStyleUrl`, `fhirContext`, `intent`, and `tenant` when the EHR provides
+them. `fhirUser` is the launching user's FHIR reference, read from the
+`fhirUser` (or `profile`) claim — request the `openid fhirUser` scopes to get
+it. Context fields are camelCase regardless of their wire names, and any vendor
+fields the EHR returns are passed through untouched. `authHeaders` is
+`{ Authorization }` when authed or `{}` otherwise; `fhirClient` spreads into
 `FHIR.client(...)`. Any custom `params` you configured are echoed back on
 `auth.params`.
 
