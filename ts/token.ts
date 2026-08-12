@@ -1,7 +1,10 @@
+import { decodeJwt } from "./jwt.js"
+
 const
    RESERVED = new Set([
       "serverUrl", "accessToken", "expiresAt", "params", "fhirClient", "authHeaders",
       "scope", "tokenType", "patient", "encounter", "idToken", "needPatientBanner", "smartStyleUrl",
+      "clientId", "fhirUser",
    ]),
 
    UNSAFE = new Set(["__proto__", "prototype", "constructor"]),
@@ -28,6 +31,16 @@ const
          if (UNSAFE.has(key) || PRIVATE.has(key) || RESERVED.has(key)) continue
          define(handoff, key, res[key])
       }
+   },
+
+   // Epic and friends return the launching practitioner as an OIDC `fhirUser`
+   // claim (an absolute or relative FHIR reference); some servers use `profile`.
+   fhirUserOf = (res: SmartTokenResponse): string | undefined => {
+      if (typeof res.fhirUser === "string") return res.fhirUser
+      const claims = res.id_token ? decodeJwt(res.id_token) : null
+      for (const key of ["fhirUser", "profile"])
+         if (typeof claims?.[key] === "string") return claims[key]
+      return undefined
    }
 
 /** Restore the non-persisted live adapters on a handoff object. */
@@ -57,6 +70,7 @@ export const applyToken = (handoff: EhrHandoff, res: SmartTokenResponse): EhrHan
    set("idToken", res.id_token)
    set("needPatientBanner", res.need_patient_banner)
    set("smartStyleUrl", res.smart_style_url)
+   set("fhirUser", fhirUserOf(res))
    flatten(handoff, res)
    return handoff
 }
@@ -66,9 +80,10 @@ export const toHandoff = (
    res: SmartTokenResponse,
    serverUrl: string,
    params: Record<string, unknown> | undefined,
+   clientId?: string,
 ): EhrHandoff =>
    hydrateHandoff(applyToken(
-      { serverUrl, params: params ? { ...params } : undefined } as EhrHandoff,
+      { serverUrl, clientId, params: params ? { ...params } : undefined } as EhrHandoff,
       res,
    ))
 

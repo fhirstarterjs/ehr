@@ -61,6 +61,7 @@ interface SmartTokenResponse {
    patient?: string
    encounter?: string
    id_token?: string
+   fhirUser?: string
    refresh_token?: string
    need_patient_banner?: boolean
    smart_style_url?: string

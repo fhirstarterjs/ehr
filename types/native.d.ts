@@ -43,6 +43,10 @@ interface EhrHandoff {
    encounter?: string
    /** Raw OpenID Connect id_token, when `openid` was granted. */
    idToken?: string
+   /** The `client_id` this session authorized with, as resolved at launch. */
+   clientId?: string
+   /** FHIR reference to the launching user, from the `fhirUser` (or `profile`) claim. */
+   fhirUser?: string
    /** SMART flag: host expects the app to show its own patient banner. */
    needPatientBanner?: boolean
    /** SMART style URL for matching the host EHR's look and feel. */

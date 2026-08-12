@@ -1,4 +1,5 @@
 import { log } from "./log.js"
+import { decodeJwt } from "./jwt.js"
 
 /** Send this iframe's callback URL to its same-origin parent without navigating it. */
 export const forwardCallback = (): Promise<never> => {
@@ -99,15 +100,10 @@ const
    },
 
    decodeLaunchJwt = (launch: string): string => {
-      const payload = launch.split(".")[1]
-      if (!payload)
+      const clientId = decodeJwt(launch)?.client_id
+      if (typeof clientId !== "string")
          throw new Error("EhrLaunch: launch token is not a JWT; provide `clientId` or `resolveClientId`")
-      const json = decodeURIComponent(
-         atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
-            .split("")
-            .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-            .join(""))
-      return JSON.parse(json).client_id
+      return clientId
    },
 
    toParent = (parent: EhrLaunchOptions["iframeParent"]): HTMLElement =>

@@ -49,7 +49,7 @@ export const completeSession = async (
    log("completeSession → exchanging code for token", { href: window.location.href })
    const
       res = await exchange(search, pre),
-      handoff = toHandoff(res, pre.serverUrl, pre.params)
+      handoff = toHandoff(res, pre.serverUrl, pre.params, pre.clientId)
    saveSession(handoff)
    startRefresh({ handoff, tokenUrl: pre.tokenUrl, clientId: pre.clientId }, res.refresh_token)
    stripCallbackParams()
